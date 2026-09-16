@@ -3,11 +3,6 @@
 //  PersonalUniverseWidget
 //
 
-//
-//  PersonalUniverseWidget.swift
-//  PersonalUniverseWidget
-//
-
 import WidgetKit
 import SwiftUI
 
