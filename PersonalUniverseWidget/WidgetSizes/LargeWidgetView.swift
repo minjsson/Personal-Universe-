@@ -11,8 +11,7 @@ struct LargeWidgetView: View {
     var body: some View {
         if universe.hasActiveChallenge {
             VStack(spacing: 12) {
-                // MARK: - Header
-
+                // 챌린지 제목
                 HStack {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(universe.title)
@@ -24,8 +23,12 @@ struct LargeWidgetView: View {
                     Spacer()
                 }
 
-                // MARK: - Progress Symbols
+                // 은하
+                WidgetGalaxyView(universe: universe)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 145)
 
+                // 전체 진행
                 WidgetProgressSymbols(
                     universe: universe,
                     showCurrentWeekOnly: false
@@ -55,4 +58,16 @@ struct LargeWidgetView: View {
             .padding(20)
         }
     }
+}
+
+#Preview("Large - Active") {
+    LargeWidgetView(universe: .previewActive)
+        .frame(width: 329, height: 345)
+        .background(.black)
+}
+
+#Preview("Large - Empty") {
+    LargeWidgetView(universe: .empty)
+        .frame(width: 329, height: 345)
+        .background(.black)
 }

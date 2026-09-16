@@ -50,28 +50,7 @@ enum WidgetSyncManager {
         from challenge: UniverseChallenge
     ) -> WidgetUniverseData {
         // ---------------------------------------------------------
-        // Current Challenge Day
-        // ---------------------------------------------------------
-        //
-        // IMPORTANT:
-        //
-        // `currentDay` represents the actual day the user is
-        // currently progressing through.
-        //
-        // `today` only represents the calendar-date day.
-        //
-        // These are intentionally different concepts.
-        //
-        // Example:
-        //
-        // Day 1 ~ Day 7 completed
-        // → currentDay = Day 8
-        // → widget currentDayNumber = 8
-        //
-        // Therefore Medium Widget will show:
-        //
-        // Day 8 ~ Day 14
-        //
+        // 오늘의 챌린지 Day
         // ---------------------------------------------------------
 
         let currentDayNumber = challenge.currentDay?.dayNumber

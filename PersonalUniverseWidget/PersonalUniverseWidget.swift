@@ -3,6 +3,11 @@
 //  PersonalUniverseWidget
 //
 
+//
+//  PersonalUniverseWidget.swift
+//  PersonalUniverseWidget
+//
+
 import WidgetKit
 import SwiftUI
 
@@ -111,6 +116,30 @@ struct WidgetRootView: View {
 #Preview(
     "Small - Empty",
     as: .systemSmall
+) {
+    PersonalUniverseWidget()
+} timeline: {
+    WidgetUniverseEntry(
+        date: .now,
+        universe: .empty
+    )
+}
+
+#Preview(
+    "Medium - Empty",
+    as: .systemMedium
+) {
+    PersonalUniverseWidget()
+} timeline: {
+    WidgetUniverseEntry(
+        date: .now,
+        universe: .empty
+    )
+}
+
+#Preview(
+    "Large - Empty",
+    as: .systemLarge
 ) {
     PersonalUniverseWidget()
 } timeline: {

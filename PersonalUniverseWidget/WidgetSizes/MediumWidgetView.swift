@@ -11,13 +11,11 @@ struct MediumWidgetView: View {
     var body: some View {
         if universe.hasActiveChallenge {
             HStack(spacing: 8) {
-                // MARK: - Galaxy
-
+                // 은하
                 WidgetGalaxyView(universe: universe)
-                    .frame(width: 170, height: 170)
+                    .frame(width: 140, height: 140)
 
-                // MARK: - Information
-
+                // 정보
                 VStack(alignment: .leading, spacing: 10) {
                     Text(universe.title)
                         .font(.system(size: 15, weight: .semibold))
@@ -25,8 +23,13 @@ struct MediumWidgetView: View {
                         .lineLimit(2)
                         .minimumScaleFactor(0.8)
 
-                    // MARK: - Current Week
+                    if let currentDayNumber = universe.currentDayNumber {
+                        Text("DAY \(String(format: "%02d", currentDayNumber))")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.9))
+                    }
 
+                    // 현재 주
                     WidgetProgressSymbols(
                         universe: universe,
                         showCurrentWeekOnly: true
@@ -57,4 +60,16 @@ struct MediumWidgetView: View {
             .padding(14)
         }
     }
+}
+
+#Preview("Medium - Active") {
+    MediumWidgetView(universe: .previewActive)
+        .frame(width: 329, height: 155)
+        .background(.black)
+}
+
+#Preview("Medium - Empty") {
+    MediumWidgetView(universe: .empty)
+        .frame(width: 329, height: 155)
+        .background(.black)
 }

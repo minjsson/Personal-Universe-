@@ -14,23 +14,41 @@ struct SmallWidgetView: View {
                 WidgetGalaxyView(universe: universe)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .padding(2)
-            } else {
-                VStack(alignment: .center, spacing: 8) {
-                    Image(systemName: "sparkles")
-                        .font(.system(size: 22, weight: .light))
-                        .foregroundStyle(.white.opacity(0.9))
 
-                    Text("Create your universe")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(.white)
-                        .multilineTextAlignment(.center)
+                if let currentDayNumber = universe.currentDayNumber {
+                    VStack {
+                        Spacer()
 
-                    Text("Start a challenge")
-                        .font(.system(size: 9))
-                        .foregroundStyle(.white.opacity(0.5))
+                        Text("DAY \(String(format: "%02d", currentDayNumber))")
+                            .font(.system(size: 11, weight: .medium))
+                            .foregroundStyle(.white.opacity(0.9))
+                            .shadow(color: .black.opacity(0.8), radius: 4)
+                    }
+                    .padding(.bottom, 6)
                 }
-                .padding(12)
+            } else {
+                VStack(spacing: 8) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 24))
+                        .foregroundStyle(.white.opacity(0.8))
+
+                    Text("Start a Challenge")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.8))
+                }
             }
         }
     }
+}
+
+#Preview("Small - Active") {
+    SmallWidgetView(universe: .previewActive)
+        .frame(width: 155, height: 155)
+        .background(.black)
+}
+
+#Preview("Small - Empty") {
+    SmallWidgetView(universe: .empty)
+        .frame(width: 155, height: 155)
+        .background(.black)
 }
