@@ -28,7 +28,7 @@ struct SmallWidgetView: View {
                 }
             } else {
                 VStack(spacing: 8) {
-                    Image(systemName: "sparkles")
+                    Image(systemName: UniverseSymbols.sparkle)
                         .font(.system(size: 24))
                         .foregroundStyle(.white.opacity(0.8))
 

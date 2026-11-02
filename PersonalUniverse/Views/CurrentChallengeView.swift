@@ -22,6 +22,8 @@ struct CurrentChallengeView: View {
     // MARK: - State
 
     @State private var selectedDay: ChallengeDay?
+    @State private var showSettings = false
+    @State private var saveErrorMessage: String?
 
     // MARK: - Calendar
 
@@ -82,6 +84,18 @@ struct CurrentChallengeView: View {
 
         // MARK: Reflection Sheet
 
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { showSettings = true } label: {
+                    Image(systemName: "slider.horizontal.3")
+                }
+                .accessibilityLabel("Challenge settings")
+            }
+        }
+        .sheet(isPresented: $showSettings) {
+            ChallengeSettingsView(challenge: challenge)
+        }
+        .saveErrorAlert($saveErrorMessage)
         .sheet(item: $selectedDay) { day in
             dayReflectionView(for: day)
                 .presentationDetents([.fraction(0.40)])
@@ -107,7 +121,7 @@ struct CurrentChallengeView: View {
         // 2. Save the changed SwiftData state.
         // -------------------------------------------------
 
-        saveChanges()
+        guard saveChanges() else { return }
 
         // -------------------------------------------------
         // 3. Sync the EXISTING challenge to the widget.
@@ -156,13 +170,14 @@ struct CurrentChallengeView: View {
 
     // MARK: - Complete Day
 
-    private func completeCurrentDay(_ day: ChallengeDay) {
+    private func completeCurrentDay(_ day: ChallengeDay) -> Bool {
+        guard day.status == .upcoming, day.challenge === challenge else { return false }
         // -------------------------------------------------
         // 1. Make sure there is a current day.
         // -------------------------------------------------
 
         guard let currentDay = challenge.currentDay else {
-            return
+            return false
         }
 
         // -------------------------------------------------
@@ -171,7 +186,7 @@ struct CurrentChallengeView: View {
         // -------------------------------------------------
 
         guard day.dayNumber == currentDay.dayNumber else {
-            return
+            return false
         }
 
         // -------------------------------------------------
@@ -182,11 +197,11 @@ struct CurrentChallengeView: View {
         // -------------------------------------------------
 
         guard let today = challenge.today else {
-            return
+            return false
         }
 
         guard today.dayNumber == day.dayNumber else {
-            return
+            return false
         }
 
         // -------------------------------------------------
@@ -219,19 +234,9 @@ struct CurrentChallengeView: View {
         // 7. Save SwiftData FIRST.
         // -------------------------------------------------
 
-        saveChanges()
+        guard saveChanges(reportError: false) else { return false }
 
-        // -------------------------------------------------
-        // 8. Reschedule notifications AFTER the challenge
-        //    state has been updated and saved.
-        //
-        //    Day 1 → completed
-        //    Day 2 → upcoming
-        //
-        //    NotificationManager now sees Day 2 as the
-        //    current day and schedules Day 2.
-        // -------------------------------------------------
-
+        // 저장 성공 후 오늘의 완료 상태에 맞춰 알림을 다시 확인합니다.
         Task { @MainActor in
             await NotificationManager.shared
                 .rescheduleAfterCompletion(
@@ -240,21 +245,7 @@ struct CurrentChallengeView: View {
                 )
         }
 
-        // -------------------------------------------------
-        // 9. Sync the UPDATED challenge to the widget.
-        //
-        // If Day 5 was completed:
-        //
-        // Day 5 -> completed
-        // Day 6 -> today
-        //
-        // The widget receives the updated state immediately.
-        //
-        // If this was the final day:
-        //
-        // active challenge -> none
-        // -------------------------------------------------
-
+        // 저장된 상태만 위젯에 반영합니다. 오늘의 날짜는 자정에 바뀝니다.
         if isFinalDay {
             WidgetSyncManager.saveEmpty()
         } else {
@@ -275,15 +266,23 @@ struct CurrentChallengeView: View {
         DispatchQueue.main.async {
             onDayCompleted(event)
         }
+        return true
     }
 
     // MARK: - Save
 
-    private func saveChanges() {
+    @discardableResult
+    private func saveChanges(reportError: Bool = true) -> Bool {
+        guard modelContext.hasChanges else { return true }
         do {
             try modelContext.save()
+            return true
         } catch {
-            print("Failed to save PersonalUniverse changes: \(error)")
+            modelContext.rollback()
+            if reportError {
+                saveErrorMessage = "Your changes could not be saved. Please try again."
+            }
+            return false
         }
     }
 }

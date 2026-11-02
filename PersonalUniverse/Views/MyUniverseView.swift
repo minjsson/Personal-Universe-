@@ -21,6 +21,7 @@ struct MyUniverseView: View {
     // MARK: - Navigation
 
     @State private var selectedChallenge: UniverseChallenge?
+    @State private var saveErrorMessage: String?
 
     // MARK: - Universe Camera
 
@@ -119,6 +120,7 @@ struct MyUniverseView: View {
                 }
             }
         }
+        .saveErrorAlert($saveErrorMessage)
         .navigationTitle("My Universe")
         .navigationBarTitleDisplayMode(.inline)
 
@@ -599,7 +601,8 @@ struct MyUniverseView: View {
         do {
             try modelContext.save()
         } catch {
-            print("Failed to save universe positions: \(error)")
+            modelContext.rollback()
+            saveErrorMessage = "Galaxy positions could not be saved. Reopen this screen to try again."
         }
     }
 

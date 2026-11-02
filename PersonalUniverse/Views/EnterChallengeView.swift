@@ -52,6 +52,7 @@ struct EnterChallengeView: View {
         )
 
     @State private var isCreating = false
+    @State private var saveErrorMessage: String?
 
     // MARK: - Constants
 
@@ -102,6 +103,7 @@ struct EnterChallengeView: View {
                 bottomNavigation
             }
         }
+        .saveErrorAlert($saveErrorMessage)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -825,18 +827,17 @@ struct EnterChallengeView: View {
 
         let descriptor = FetchDescriptor<UniverseChallenge>()
 
-        if let existingChallenges =
-            try? modelContext.fetch(descriptor) {
-            for challenge
-            in existingChallenges
-            where challenge.status == .active {
-                challenge.status = .completed
-
-                NotificationManager.shared
-                    .cancelAllReminders(
-                        for: challenge
-                    )
-            }
+        let previousActiveChallenges: [UniverseChallenge]
+        do {
+            previousActiveChallenges = try modelContext.fetch(descriptor)
+                .filter { $0.status == .active }
+        } catch {
+            saveErrorMessage = "Existing challenges could not be loaded. Please try again."
+            isCreating = false
+            return
+        }
+        for challenge in previousActiveChallenges {
+            challenge.status = .completed
         }
 
         // MARK: Start Date
@@ -870,6 +871,10 @@ struct EnterChallengeView: View {
 
         do {
             try modelContext.save()
+            // 새 챌린지 저장 성공 후에만 이전 알림을 취소합니다.
+            for previousChallenge in previousActiveChallenges {
+                NotificationManager.shared.cancelAllReminders(for: previousChallenge)
+            }
 
             // -------------------------------------------------
             // Widget
@@ -903,7 +908,8 @@ struct EnterChallengeView: View {
 
             dismiss()
         } catch {
-            print("Failed to create challenge: \(error)")
+            modelContext.rollback()
+            saveErrorMessage = "Your challenge could not be created. Your selections are still here. Please try again."
             isCreating = false
         }
     }

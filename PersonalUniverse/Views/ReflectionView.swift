@@ -9,7 +9,18 @@ import SwiftUI
 
 struct ReflectionView: View {
     @Binding var reflection: String
-    let onComplete: () -> Void
+    let onComplete: () -> Bool
+
+    @State private var draftReflection: String
+    @State private var saveErrorMessage: String?
+    @State private var showDiscardConfirmation = false
+    @Environment(\.dismiss) private var dismiss
+
+    init(reflection: Binding<String>, onComplete: @escaping () -> Bool) {
+        _reflection = reflection
+        self.onComplete = onComplete
+        _draftReflection = State(initialValue: reflection.wrappedValue)
+    }
 
     private let characterLimit = 150
 
@@ -59,7 +70,7 @@ struct ReflectionView: View {
 
                 // MARK: - Reflection Box
 
-                TextEditor(text: $reflection)
+                TextEditor(text: $draftReflection)
                     .tint(.white.opacity(0.65))
                     .scrollContentBackground(.hidden)
                     .foregroundStyle(.white)
@@ -88,7 +99,7 @@ struct ReflectionView: View {
                         )
                     )
                     .onChange(
-                        of: reflection
+                        of: draftReflection
                     ) {
                         limitReflection()
                     }
@@ -98,10 +109,10 @@ struct ReflectionView: View {
                 HStack {
                     Spacer()
 
-                    Text("\(reflection.count) / \(characterLimit)")
+                    Text("\(draftReflection.count) / \(characterLimit)")
                         .font(.system(size: 13))
                         .foregroundStyle(
-                            reflection.count >= characterLimit
+                            draftReflection.count >= characterLimit
                             ? .white
                             : .white.opacity(0.5)
                         )
@@ -129,6 +140,21 @@ struct ReflectionView: View {
             .padding(.horizontal, horizontalPadding)
         }
 
+        .interactiveDismissDisabled(!draftReflection.isEmpty || isCompleting)
+        .overlay(alignment: .topTrailing) {
+            Button("Close") {
+                if draftReflection.isEmpty { dismiss() }
+                else { showDiscardConfirmation = true }
+            }
+            .padding()
+            .foregroundStyle(.white)
+            .disabled(isCompleting)
+        }
+        .confirmationDialog("Discard unfinished reflection?", isPresented: $showDiscardConfirmation, titleVisibility: .visible) {
+            Button("Discard", role: .destructive) { dismiss() }
+            Button("Keep writing", role: .cancel) {}
+        }
+        .saveErrorAlert($saveErrorMessage)
         // MARK: - Completion Confirmation
 
         .alert(
@@ -179,12 +205,12 @@ struct ReflectionView: View {
     // MARK: - Character Limit
 
     private func limitReflection() {
-        guard reflection.count > characterLimit else {
+        guard draftReflection.count > characterLimit else {
             return
         }
 
-        reflection = String(
-            reflection.prefix(characterLimit)
+        draftReflection = String(
+            draftReflection.prefix(characterLimit)
         )
     }
 
@@ -205,16 +231,6 @@ struct ReflectionView: View {
         }
 
         DispatchQueue.main.asyncAfter(
-            deadline: .now() + 0.18
-        ) {
-            withAnimation(
-                .easeInOut(duration: 0.22)
-            ) {
-                isCompleting = false
-            }
-        }
-
-        DispatchQueue.main.asyncAfter(
             deadline: .now() + 0.48
         ) {
             withAnimation(
@@ -227,7 +243,13 @@ struct ReflectionView: View {
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 0.63
         ) {
-            onComplete()
+            let original = reflection
+            reflection = draftReflection
+            if !onComplete() {
+                isCompleting = false
+                reflection = original
+                saveErrorMessage = "Your reflection could not be saved. Your draft is still here. Please try again."
+            }
         }
     }
 }
@@ -237,6 +259,6 @@ struct ReflectionView: View {
 #Preview {
     ReflectionView(
         reflection: .constant(""),
-        onComplete: {}
+        onComplete: { true }
     )
 }

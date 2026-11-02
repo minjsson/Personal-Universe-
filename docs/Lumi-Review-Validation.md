@@ -1,0 +1,31 @@
+# Lumi review branch — validation
+
+Issue: https://github.com/minjsson/Personal-Universe-/issues/1
+
+Branch: review/1-lumi-day7-reliability-and-universe-settings
+
+## Automated checks
+
+- iPhone Simulator Debug build for PersonalUniverse (including embedded widget extension).
+- `bash Tests/Day7Regression/run.sh`: runs the production model/metadata editor/store loader on macOS with an in-memory SwiftData container. Covers successful metadata save, failed-save restoration, blank-title rejection, unchanged progress/dates/days, startup failure followed by successful retry, and nonzero revealAt.
+- `git diff --check`.
+
+The regression runner is a standalone Swift executable, not an Xcode XCTest target. It requires macOS 14+ and Xcode. It does not touch the app's persistent store.
+
+## Simulator smoke check
+
+The app launched successfully in an isolated iPhone 17 Pro / iOS 26.5 simulator. Startup and title/duration/reminder creation screens were inspected. Simulator interaction was interrupted before a complete settings/editing visual pass, so those flows are not claimed as manually verified.
+
+## Manual checks before release
+
+- Open current-challenge settings and settings from My Universe; save/cancel title/style edits and reopen them after an app restart.
+- Confirm the active widget and reminder title update after a successful edit; real notifications and widget delivery require device verification.
+- Complete a normal day and final day from both routes; check one completion event, matching model state, and the midnight day-selection rule.
+- Simulate save failure in the UI and confirm draft remains, no success event appears, and retry works.
+- Dismiss an unfinished reflection using Close, choose Keep writing, then Discard; reopen and verify no draft was persisted.
+- Watch decorative events, check touch pass-through and Reduce Motion, and evaluate brightness on a real device.
+- Existing-database upgrade, low-storage behavior, and a genuinely damaged store are not reproduced by the in-memory checks.
+
+## Scope notes
+
+No destructive database reset or automatic in-memory fallback is introduced. Notification/Widget diagnostic-only error paths remain future work. Layout, challenge length, and start-date rules are preserved. No PR or merge is requested.

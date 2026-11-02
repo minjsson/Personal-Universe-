@@ -50,8 +50,8 @@
 			membershipExceptions = (
 				Galaxy/GalaxyBody.swift,
 				Galaxy/GalaxyBodyView.swift,
-				Galaxy/GalaxyComponents.swift,
 				Galaxy/GalaxyModels.swift,
+				Galaxy/UniverseSymbols.swift,
 				Galaxy/GalaxyStar.swift,
 				Galaxy/GalaxyStyle.swift,
 				Galaxy/GalaxyView.swift,

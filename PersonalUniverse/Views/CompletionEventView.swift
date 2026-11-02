@@ -42,7 +42,7 @@ struct CompletionEventView: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            .white.opacity(atmosphereAppeared ? 0.12 : 0),
+                            .white.opacity(atmosphereAppeared ? 0.22 : 0),
                             .white.opacity(0.025),
                             .clear
                         ],
@@ -81,8 +81,8 @@ struct CompletionEventView: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            .white.opacity(completionLight ? 0.24 : 0.02),
-                            .white.opacity(completionLight ? 0.08 : 0),
+                            .white.opacity(completionLight ? 0.36 : 0.02),
+                            .white.opacity(completionLight ? 0.13 : 0),
                             .clear
                         ],
                         center: .center,

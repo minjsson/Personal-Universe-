@@ -24,8 +24,8 @@ struct GrowthEventView: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            .white.opacity(appeared ? 0.10 : 0),
-                            .white.opacity(0.015),
+                            .white.opacity(appeared ? 0.20 : 0),
+                            .white.opacity(0.035),
                             .clear
                         ],
                         center: .center,
@@ -52,7 +52,7 @@ struct GrowthEventView: View {
 
             Circle()
                 .stroke(
-                    .white.opacity(pulse ? 0 : 0.25),
+                    .white.opacity(pulse ? 0 : 0.45),
                     lineWidth: 1
                 )
                 .frame(

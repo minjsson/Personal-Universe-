@@ -24,6 +24,7 @@ struct ContentView: View {
     // MARK: - Refresh
 
     @State private var refreshDate = Date()
+    @State private var saveErrorMessage: String?
 
     // MARK: - Event State
 
@@ -121,6 +122,7 @@ struct ContentView: View {
                 }
             }
         }
+        .saveErrorAlert($saveErrorMessage)
         // MARK: Lifecycle
 
         .onAppear {
@@ -266,9 +268,9 @@ struct ContentView: View {
         do {
             try modelContext.save()
         } catch {
-            print(
-                "Failed to save completed challenge: \(error)"
-            )
+            modelContext.rollback()
+            saveErrorMessage = "Your completed challenge could not be saved. Please try again."
+            return
         }
 
         // The challenge is no longer active.
@@ -409,9 +411,9 @@ struct ContentView: View {
         do {
             try modelContext.save()
         } catch {
-            print(
-                "Failed to save PersonalUniverse changes: \(error)"
-            )
+            modelContext.rollback()
+            saveErrorMessage = "Your challenge could not be updated. Please try again."
+            return
         }
 
         // -------------------------------------------------

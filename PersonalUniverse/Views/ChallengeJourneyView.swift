@@ -15,6 +15,8 @@ struct ChallengeJourneyView: View {
     // MARK: - Reflection
 
     @State private var selectedDay: ChallengeDay?
+    @State private var showSettings = false
+    @State private var saveErrorMessage: String?
 
     // MARK: - Event State
 
@@ -65,6 +67,18 @@ struct ChallengeJourneyView: View {
             saveChanges()
         }
         // MARK: Reflection Sheet
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button { showSettings = true } label: {
+                    Image(systemName: "slider.horizontal.3")
+                }
+                .accessibilityLabel("Challenge settings")
+            }
+        }
+        .sheet(isPresented: $showSettings) {
+            ChallengeSettingsView(challenge: challenge)
+        }
+        .saveErrorAlert($saveErrorMessage)
         .sheet(item: $selectedDay) { day in
             dayReflectionView(for: day)
                 .presentationDetents([.fraction(0.40)])
@@ -188,20 +202,21 @@ struct ChallengeJourneyView: View {
 
     // MARK: - Complete Day
 
-    private func completeCurrentDay(_ day: ChallengeDay) {
+    private func completeCurrentDay(_ day: ChallengeDay) -> Bool {
+        guard day.status == .upcoming, day.challenge === challenge else { return false }
         guard let currentDay = challenge.currentDay else {
-            return
+            return false
         }
 
         guard day.dayNumber == currentDay.dayNumber else {
-            return
+            return false
         }
 
         // -------------------------------------------------
         // Complete the day first.
         // -------------------------------------------------
 
-        day.complete(at: .now)
+        challenge.completeDay(day, at: .now)
 
         // -------------------------------------------------
         // Determine whether this was the final day.
@@ -210,24 +225,21 @@ struct ChallengeJourneyView: View {
         let isFinalDay = challenge.completedDayCount == challenge.days.count
         let event: UniverseEvent = isFinalDay ? .completion : .growth
 
-        // -------------------------------------------------
-        // For a normal day:
-        //
-        // Update the challenge immediately so that the
-        // galaxy/progress is already grown when the
-        // GrowthEventView appears.
-        //
-        // For the final day:
-        //
-        // Keep the challenge active until the completion
-        // event has taken ownership of the screen.
-        // -------------------------------------------------
+        // 완료 상태도 함께 저장한 뒤 이벤트를 시작합니다.
+        challenge.updateCompletionStatus()
 
-        if !isFinalDay {
-            challenge.updateCompletionStatus()
+        guard saveChanges(reportError: false) else { return false }
+
+        if isFinalDay {
+            WidgetSyncManager.saveEmpty()
+        } else {
+            WidgetSyncManager.save(challenge: challenge)
         }
-
-        saveChanges()
+        Task { @MainActor in
+            await NotificationManager.shared.rescheduleAfterCompletion(
+                for: challenge, completedDayNumber: day.dayNumber
+            )
+        }
 
         // -------------------------------------------------
         // Close the reflection sheet FIRST.
@@ -246,6 +258,7 @@ struct ChallengeJourneyView: View {
         DispatchQueue.main.async {
             startEvent(event)
         }
+        return true
     }
 
     // MARK: - Start Event
@@ -278,18 +291,18 @@ struct ChallengeJourneyView: View {
 
     // MARK: - Completion Event
 
-    private func finalizeCompletedChallenge() {
+    private func finalizeCompletedChallenge() -> Bool {
         if challenge.status != .completed {
             challenge.status = .completed
         }
 
-        saveChanges()
+        return saveChanges()
     }
 
     // MARK: - Completion → My Universe
 
     private func goToMyUniverse() {
-        finalizeCompletedChallenge()
+        guard finalizeCompletedChallenge() else { return }
 
         withAnimation(.easeOut(duration: 0.25)) {
             activeEvent = .none
@@ -312,7 +325,7 @@ struct ChallengeJourneyView: View {
     // MARK: - Completion → New Challenge
 
     private func goToNewChallenge() {
-        finalizeCompletedChallenge()
+        guard finalizeCompletedChallenge() else { return }
 
         withAnimation(.easeOut(duration: 0.25)) {
             activeEvent = .none
@@ -341,11 +354,18 @@ struct ChallengeJourneyView: View {
 
     // MARK: - Save
 
-    private func saveChanges() {
+    @discardableResult
+    private func saveChanges(reportError: Bool = true) -> Bool {
+        guard modelContext.hasChanges else { return true }
         do {
             try modelContext.save()
+            return true
         } catch {
-            print("Failed to save PersonalUniverse changes: \(error)")
+            modelContext.rollback()
+            if reportError {
+                saveErrorMessage = "Your changes could not be saved. Please try again."
+            }
+            return false
         }
     }
 }

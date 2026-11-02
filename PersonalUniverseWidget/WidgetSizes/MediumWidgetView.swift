@@ -43,7 +43,7 @@ struct MediumWidgetView: View {
             VStack(alignment: .center, spacing: 6) {
                 Spacer()
 
-                Image(systemName: "sparkles")
+                Image(systemName: UniverseSymbols.sparkle)
                     .font(.system(size: 24, weight: .light))
                     .foregroundStyle(.white.opacity(0.9))
 

@@ -8,8 +8,13 @@
 import SwiftUI
 
 struct SpaceBackground: View {
-    // IMPORTANT:
-    // @State keeps the randomly generated stars stable.
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var ambientEvent: AmbientSpaceEvent?
+
+    private var animateBackground: Bool { !reduceMotion && scenePhase == .active }
+
+    // 무작위 별의 위치는 View 갱신 중에도 유지합니다.
     @State private var stars: [BackgroundStar] = {
         (0..<70).map { _ in
             BackgroundStar()
@@ -17,7 +22,7 @@ struct SpaceBackground: View {
     }()
 
     var body: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animateBackground)) { timeline in
             GeometryReader { geometry in
                 ZStack {
                     Color.black
@@ -39,7 +44,27 @@ struct SpaceBackground: View {
                                 )
                             )
                     }
+                    if let ambientEvent, animateBackground {
+                        AmbientSpaceEventView(event: ambientEvent, date: timeline.date)
+                    }
                 }
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        .task(id: animateBackground) {
+            ambientEvent = nil
+            guard animateBackground else { return }
+            do {
+                while !Task.isCancelled {
+                    try await Task.sleep(for: .seconds(Double.random(in: 12...26)))
+                    guard !Task.isCancelled else { return }
+                    ambientEvent = AmbientSpaceEvent(kind: AmbientSpaceEvent.Kind.allCases.randomElement() ?? .meteor)
+                    try await Task.sleep(for: .seconds(6))
+                    ambientEvent = nil
+                }
+            } catch {
+                ambientEvent = nil
             }
         }
     }
