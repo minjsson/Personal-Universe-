@@ -10,7 +10,6 @@ import SwiftUI
 struct SpaceBackground: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.ambientSpaceScene) private var ambientScene
 
     private var animateBackground: Bool { !reduceMotion && scenePhase == .active }
 
@@ -43,9 +42,6 @@ struct SpaceBackground: View {
                                     at: timeline.date
                                 )
                             )
-                    }
-                    if let ambientEvent = ambientScene?.event, animateBackground {
-                        AmbientSpaceEventView(event: ambientEvent, date: timeline.date)
                     }
                 }
             }

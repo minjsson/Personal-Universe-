@@ -104,8 +104,9 @@ struct MyUniverseView: View {
             ZStack {
                 // MARK: Background
 
-                SpaceBackground()
+                SpaceSceneBackground()
                     .ignoresSafeArea()
+                    .zIndex(-1)
 
                 // MARK: Content
 

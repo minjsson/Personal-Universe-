@@ -33,8 +33,9 @@ struct CompletionEventView: View {
         ZStack {
             // MARK: - Space
 
-            SpaceBackground()
+            SpaceSceneBackground()
                 .ignoresSafeArea()
+                .zIndex(-1)
 
             // MARK: - Atmosphere
 

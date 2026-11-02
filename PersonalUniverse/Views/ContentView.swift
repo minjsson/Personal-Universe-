@@ -58,8 +58,9 @@ struct ContentView: View {
             ZStack {
                 // MARK: Background
 
-                SpaceBackground()
+                SpaceSceneBackground()
                     .ignoresSafeArea()
+                    .zIndex(-1)
 
                 // MARK: Main Content
 

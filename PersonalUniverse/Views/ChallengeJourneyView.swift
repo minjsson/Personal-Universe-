@@ -38,8 +38,9 @@ struct ChallengeJourneyView: View {
 
     var body: some View {
         ZStack {
-            SpaceBackground()
+            SpaceSceneBackground()
                 .ignoresSafeArea()
+                .zIndex(-1)
 
             // -------------------------------------------------
             // Events belong to this ChallengeJourneyView when

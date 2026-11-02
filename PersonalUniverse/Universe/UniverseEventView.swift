@@ -41,7 +41,7 @@ struct UniverseEventView: View {
 
 #Preview("Growth — Expanding") {
     ZStack {
-        SpaceBackground()
+        SpaceSceneBackground()
             .ignoresSafeArea()
 
         UniverseEventView(
@@ -58,7 +58,7 @@ struct UniverseEventView: View {
 
 #Preview("Growth — Cluster") {
     ZStack {
-        SpaceBackground()
+        SpaceSceneBackground()
             .ignoresSafeArea()
 
         UniverseEventView(
@@ -75,7 +75,7 @@ struct UniverseEventView: View {
 
 #Preview("Growth — Spiral") {
     ZStack {
-        SpaceBackground()
+        SpaceSceneBackground()
             .ignoresSafeArea()
 
         UniverseEventView(
@@ -92,7 +92,7 @@ struct UniverseEventView: View {
 
 #Preview("Completion — Expanding") {
     ZStack {
-        SpaceBackground()
+        SpaceSceneBackground()
             .ignoresSafeArea()
 
         UniverseEventView(
@@ -109,7 +109,7 @@ struct UniverseEventView: View {
 
 #Preview("Completion — Cluster") {
     ZStack {
-        SpaceBackground()
+        SpaceSceneBackground()
             .ignoresSafeArea()
 
         UniverseEventView(
@@ -126,7 +126,7 @@ struct UniverseEventView: View {
 
 #Preview("Completion — Spiral") {
     ZStack {
-        SpaceBackground()
+        SpaceSceneBackground()
             .ignoresSafeArea()
 
         UniverseEventView(

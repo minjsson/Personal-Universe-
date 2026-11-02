@@ -71,8 +71,9 @@ struct EnterChallengeView: View {
 
     var body: some View {
         ZStack {
-            SpaceBackground()
+            SpaceSceneBackground()
                 .ignoresSafeArea()
+                .zIndex(-1)
 
             Color.black
                 .opacity(0.35)

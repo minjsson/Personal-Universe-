@@ -79,7 +79,7 @@ struct GrowthEventView: View {
 
 #Preview("Growth — 10% — Expanding") {
     ZStack {
-        SpaceBackground()
+        SpaceSceneBackground()
             .ignoresSafeArea()
 
         GrowthEventView(
@@ -91,7 +91,7 @@ struct GrowthEventView: View {
 
 #Preview("Growth — 35% — Expanding") {
     ZStack {
-        SpaceBackground()
+        SpaceSceneBackground()
             .ignoresSafeArea()
 
         GrowthEventView(
@@ -103,7 +103,7 @@ struct GrowthEventView: View {
 
 #Preview("Growth — 60% — Cluster") {
     ZStack {
-        SpaceBackground()
+        SpaceSceneBackground()
             .ignoresSafeArea()
 
         GrowthEventView(
@@ -115,7 +115,7 @@ struct GrowthEventView: View {
 
 #Preview("Growth — 80% — Spiral") {
     ZStack {
-        SpaceBackground()
+        SpaceSceneBackground()
             .ignoresSafeArea()
 
         GrowthEventView(

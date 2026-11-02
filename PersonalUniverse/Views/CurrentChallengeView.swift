@@ -35,8 +35,9 @@ struct CurrentChallengeView: View {
 
     var body: some View {
         ZStack {
-            SpaceBackground()
+            SpaceSceneBackground()
                 .ignoresSafeArea()
+                .zIndex(-1)
 
             VStack(spacing: 32) {
                 Spacer()

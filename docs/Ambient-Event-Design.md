@@ -25,3 +25,13 @@ The image below renders the actual revised event and galaxy Views at selected mi
 ![Event design preview](images/ambient-events-preview.png)
 
 On-device assessment of perceived timing, brightness and movement remains useful, particularly at low screen brightness.
+
+## Layering
+
+Each screen uses this explicit order in its ZStack:
+
+1. `SpaceBackground`: black field and stars.
+2. `AmbientSpaceEventLayer`: decorative meteor/satellite/station.
+3. Screen content: galaxies, text, controls and cards.
+
+The first two are grouped in `SpaceSceneBackground`, placed at zIndex -1 relative to screen content. Events are not attached as a foreground overlay. The backdrop passes touches through. Transparent areas of foreground Views still reveal the backdrop naturally; opaque foreground surfaces occlude it.
