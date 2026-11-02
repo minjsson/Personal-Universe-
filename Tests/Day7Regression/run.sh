@@ -3,6 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 output_dir="$(mktemp -d /tmp/personal-universe-regression.XXXXXX)"
 xcrun swiftc -parse-as-library -target "$(uname -m)-apple-macosx14.0" \
+    PersonalUniverse/Background/AmbientSpaceEvent.swift \
     PersonalUniverse/Galaxy/GalaxyStyle.swift \
     PersonalUniverse/Galaxy/GalaxyModels.swift \
     PersonalUniverse/Model/DayStatus.swift \

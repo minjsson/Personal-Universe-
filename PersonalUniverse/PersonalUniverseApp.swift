@@ -13,6 +13,13 @@ struct PersonalUniverseApp: App {
 // 저장소를 열지 못해도 기존 파일을 지우지 않고 재시도할 수 있습니다.
 struct DatabaseRootView: View {
     @State private var store = PersistentStoreLoader()
+    @State private var ambientScene = AmbientSpaceScene()
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
+
+    private var animateAmbience: Bool {
+        store.container != nil && scenePhase == .active && !reduceMotion
+    }
 
     var body: some View {
         Group {
@@ -35,7 +42,11 @@ struct DatabaseRootView: View {
                 .padding()
             }
         }
+        .environment(\.ambientSpaceScene, ambientScene)
         .preferredColorScheme(.dark)
+        .task(id: animateAmbience) {
+            await ambientScene.run(enabled: animateAmbience)
+        }
         .task { store.open() }
     }
 

@@ -29,3 +29,7 @@ The app launched successfully in an isolated iPhone 17 Pro / iOS 26.5 simulator.
 ## Scope notes
 
 No destructive database reset or automatic in-memory fallback is introduced. Notification/Widget diagnostic-only error paths remain future work. Layout, challenge length, and start-date rules are preserved. No PR or merge is requested.
+
+## Ambient event follow-up
+
+The initial cyan/six-second effects were replaced by the cohesive monochrome designs and window-scoped varied scheduler described in [Ambient event refinement](Ambient-Event-Design.md). The Simulator build and the expanded seeded regression checks passed. A static render of the actual event/galaxy Views was visually inspected; real-time timing and device brightness are still manual checks.

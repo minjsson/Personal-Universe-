@@ -10,7 +10,7 @@ import SwiftUI
 struct SpaceBackground: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
-    @State private var ambientEvent: AmbientSpaceEvent?
+    @Environment(\.ambientSpaceScene) private var ambientScene
 
     private var animateBackground: Bool { !reduceMotion && scenePhase == .active }
 
@@ -44,7 +44,7 @@ struct SpaceBackground: View {
                                 )
                             )
                     }
-                    if let ambientEvent, animateBackground {
+                    if let ambientEvent = ambientScene?.event, animateBackground {
                         AmbientSpaceEventView(event: ambientEvent, date: timeline.date)
                     }
                 }
@@ -52,21 +52,7 @@ struct SpaceBackground: View {
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
-        .task(id: animateBackground) {
-            ambientEvent = nil
-            guard animateBackground else { return }
-            do {
-                while !Task.isCancelled {
-                    try await Task.sleep(for: .seconds(Double.random(in: 12...26)))
-                    guard !Task.isCancelled else { return }
-                    ambientEvent = AmbientSpaceEvent(kind: AmbientSpaceEvent.Kind.allCases.randomElement() ?? .meteor)
-                    try await Task.sleep(for: .seconds(6))
-                    ambientEvent = nil
-                }
-            } catch {
-                ambientEvent = nil
-            }
-        }
+
     }
 }
 

@@ -64,7 +64,54 @@ func runChecks() throws {
     // 멤버와이즈 초기화가 0이 아닌 revealAt을 보존해야 합니다.
     let point = GalaxyPoint(x: 1, y: 2, size: 3, opacity: 0.8, revealAt: 0.7)
     precondition(point.revealAt == 0.7)
-    print("PASS: metadata save, failure restoration, validation, progress preservation, startup retry, revealAt")
+    // 고정 시드로 경로·속도·간격의 다양성과 안전 범위를 검사합니다.
+    var generator = EventTestGenerator()
+    var previous: AmbientSpaceEvent.Kind?
+    var seenKinds = Set<Int>()
+    var seenSpeeds = Set<Int>()
+    var leftToRight = false
+    var rightToLeft = false
+    var shortGap = false
+    var longGap = false
+    for _ in 0..<512 {
+        let event = AmbientSpaceEvent.random(after: previous, using: &generator)
+        precondition(event.kind != previous)
+        precondition((0.08...0.85).contains(event.end.y))
+        precondition(event.start.x != event.end.x)
+        leftToRight = leftToRight || event.start.x < event.end.x
+        rightToLeft = rightToLeft || event.start.x > event.end.x
+        switch event.kind {
+        case .meteor:
+            seenKinds.insert(0)
+            precondition((0.9...1.8).contains(event.duration) && event.arc == 0)
+        case .satellite:
+            seenKinds.insert(1)
+            precondition((10...17).contains(event.duration))
+        case .station:
+            seenKinds.insert(2)
+            precondition((18...26).contains(event.duration))
+        }
+        seenSpeeds.insert(Int(event.duration * 10))
+        let gap = AmbientSpaceEvent.quietInterval(using: &generator)
+        precondition((10...120).contains(gap))
+        shortGap = shortGap || gap <= 28
+        longGap = longGap || gap >= 80
+        previous = event.kind
+    }
+    precondition(seenKinds.count == 3 && seenSpeeds.count > 10)
+    precondition(leftToRight && rightToLeft && shortGap && longGap)
+    print("PASS: storage/edit regressions, revealAt, ambient variety/bounds/no immediate repeats")
+}
+
+struct EventTestGenerator: RandomNumberGenerator {
+    private var state: UInt64 = 7
+    mutating func next() -> UInt64 {
+        state &+= 0x9E3779B97F4A7C15
+        var value = state
+        value = (value ^ (value >> 30)) &* 0xBF58476D1CE4E5B9
+        value = (value ^ (value >> 27)) &* 0x94D049BB133111EB
+        return value ^ (value >> 31)
+    }
 }
 
 @main
