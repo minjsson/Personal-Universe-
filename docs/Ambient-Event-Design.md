@@ -35,3 +35,7 @@ Each screen uses this explicit order in its ZStack:
 3. Screen content: galaxies, text, controls and cards.
 
 The first two are grouped in `SpaceSceneBackground`, placed at zIndex -1 relative to screen content. Events are not attached as a foreground overlay. The backdrop passes touches through. Transparent areas of foreground Views still reveal the backdrop naturally; opaque foreground surfaces occlude it.
+
+## Satellite versus station silhouettes
+
+The satellite now has a compact body, two panel wings and a small dish antenna (14–19 points wide). The station uses a long truss, four vertical panel pairs and connected modules (38–48 points wide). Their existing different motion speeds remain. Both retain the same restrained white-line material and background layering. The revised actual Views were rendered side by side and inspected; the app/widget build passed.

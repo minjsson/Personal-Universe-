@@ -34,7 +34,7 @@ struct AmbientSpaceEvent {
             start: CGPoint(x: leftToRight ? -0.25 : 1.25, y: startY),
             end: CGPoint(x: leftToRight ? 1.25 : -0.25, y: endY),
             arc: kind == .meteor ? 0 : CGFloat.random(in: -0.16...0.16, using: &generator),
-            size: CGFloat.random(in: kind == .meteor ? 38...80 : (kind == .satellite ? 12...18 : 22...30), using: &generator),
+            size: CGFloat.random(in: kind == .meteor ? 38...80 : (kind == .satellite ? 14...19 : 38...48), using: &generator),
             brightness: Double.random(in: kind == .meteor ? 0.40...0.65 : 0.24...0.42, using: &generator),
             tilt: Double.random(in: -35...35, using: &generator)
         )
@@ -107,21 +107,44 @@ struct AmbientSpaceEventView: View {
             truss.addLine(to: CGPoint(x: size.width * 0.92, y: center.y))
             context.stroke(truss, with: .color(.white.opacity(0.65)), lineWidth: 0.6)
 
-            for x in [size.width * 0.08, size.width * 0.65] {
-                let panel = CGRect(x: x, y: size.height * 0.28, width: size.width * 0.27, height: size.height * 0.44)
-                context.stroke(Path(roundedRect: panel, cornerRadius: 0.5), with: .color(.white.opacity(0.65)), lineWidth: 0.5)
-                if event.kind == .station {
-                    var division = Path()
-                    division.move(to: CGPoint(x: panel.midX, y: panel.minY))
-                    division.addLine(to: CGPoint(x: panel.midX, y: panel.maxY))
-                    context.stroke(division, with: .color(.white.opacity(0.4)), lineWidth: 0.4)
+            if event.kind == .satellite {
+                // 작은 본체, 두 날개, 접시형 안테나로 구별합니다.
+                for x in [size.width * 0.06, size.width * 0.68] {
+                    let panel = CGRect(x: x, y: size.height * 0.38, width: size.width * 0.26, height: size.height * 0.34)
+                    context.stroke(Path(roundedRect: panel, cornerRadius: 0.5), with: .color(.white.opacity(0.75)), lineWidth: 0.6)
                 }
-            }
-            let body = CGRect(x: center.x - 1.5, y: center.y - 3, width: 3, height: 6)
-            context.fill(Path(roundedRect: body, cornerRadius: 1), with: .color(.white.opacity(0.85)))
-            if event.kind == .station {
-                let orbit = CGRect(x: center.x - 5, y: center.y - 5, width: 10, height: 10)
-                context.stroke(Path(ellipseIn: orbit), with: .color(.white.opacity(0.3)), lineWidth: 0.4)
+                let body = CGRect(x: center.x - 1.6, y: center.y - 2.2, width: 3.2, height: 4.4)
+                context.fill(Path(roundedRect: body, cornerRadius: 0.8), with: .color(.white.opacity(0.85)))
+                var antenna = Path()
+                antenna.move(to: center)
+                antenna.addLine(to: CGPoint(x: center.x + 2, y: size.height * 0.2))
+                antenna.move(to: CGPoint(x: center.x - 1, y: size.height * 0.14))
+                antenna.addQuadCurve(
+                    to: CGPoint(x: center.x + 4, y: size.height * 0.24),
+                    control: CGPoint(x: center.x + 0.5, y: size.height * 0.44)
+                )
+                context.stroke(antenna, with: .color(.white.opacity(0.8)), lineWidth: 0.6)
+            } else {
+                // 긴 트러스, 네 쌍의 세로 패널, 여러 모듈로 정거장 실루엣을 만듭니다.
+                for fraction in [0.12, 0.32, 0.68, 0.88] {
+                    let x = size.width * fraction
+                    for y in [size.height * 0.10, size.height * 0.60] {
+                        let panel = CGRect(x: x - size.width * 0.055, y: y, width: size.width * 0.11, height: size.height * 0.30)
+                        context.stroke(Path(panel), with: .color(.white.opacity(0.75)), lineWidth: 0.6)
+                    }
+                    var support = Path()
+                    support.move(to: CGPoint(x: x, y: size.height * 0.38))
+                    support.addLine(to: CGPoint(x: x, y: size.height * 0.62))
+                    context.stroke(support, with: .color(.white.opacity(0.65)), lineWidth: 0.6)
+                }
+                let core = CGRect(x: size.width * 0.40, y: center.y - 1.8, width: size.width * 0.20, height: 3.6)
+                context.fill(Path(roundedRect: core, cornerRadius: 1), with: .color(.white.opacity(0.8)))
+                var modules = Path()
+                modules.move(to: CGPoint(x: center.x, y: size.height * 0.24))
+                modules.addLine(to: CGPoint(x: center.x, y: size.height * 0.76))
+                modules.move(to: CGPoint(x: size.width * 0.40, y: center.y))
+                modules.addLine(to: CGPoint(x: size.width * 0.60, y: center.y))
+                context.stroke(modules, with: .color(.white.opacity(0.8)), lineWidth: 2)
             }
         }
         .frame(width: event.size, height: event.size * 0.55)
