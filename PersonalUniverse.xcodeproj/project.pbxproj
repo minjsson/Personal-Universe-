@@ -75,6 +75,7 @@
 				WidgetSizes/SmallWidgetView.swift,
 				WidgetSyncManager.swift,
 				WidgetUniverseData.swift,
+				WidgetSnapshotStore.swift,
 			);
 			target = 4CE990823025BC6C009E761B /* PersonalUniverse */;
 		};

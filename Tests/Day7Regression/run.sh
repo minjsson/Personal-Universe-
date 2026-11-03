@@ -11,5 +11,9 @@ xcrun swiftc -parse-as-library -target "$(uname -m)-apple-macosx14.0" \
     PersonalUniverse/Model/UniverseChallenge.swift \
     PersonalUniverse/Model/ChallengeMetadataEditor.swift \
     PersonalUniverse/Model/PersistentStoreLoader.swift \
+    PersonalUniverse/Model/StoreBackup.swift \
+    PersonalUniverse/Manager/NotificationManager.swift \
+    PersonalUniverseWidget/WidgetUniverseData.swift \
+    PersonalUniverseWidget/WidgetSnapshotStore.swift \
     Tests/Day7Regression/main.swift -o "$output_dir/checks"
 "$output_dir/checks"

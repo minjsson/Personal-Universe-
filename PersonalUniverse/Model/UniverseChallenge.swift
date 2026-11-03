@@ -102,7 +102,9 @@ final class UniverseChallenge {
             ChallengeStatus(rawValue: statusRawValue) ?? .active
         }
         set {
-            statusRawValue = newValue.rawValue
+            if statusRawValue != newValue.rawValue {
+                statusRawValue = newValue.rawValue
+            }
         }
     }
 

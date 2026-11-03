@@ -10,23 +10,17 @@ enum WidgetDataManager {
     private static let dataKey = "widgetUniverseData"
 
     static func load() -> WidgetUniverseData {
-        guard let defaults = UserDefaults(suiteName: appGroupID) else {
-            print("WidgetDataManager: Could not access App Group.")
-            return .empty
+        if let directory = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupID) {
+            if let snapshot = WidgetSnapshotStore(directory: directory).load() { return snapshot }
         }
-
-        guard let data = defaults.data(forKey: dataKey) else {
-            return .empty
+        // Upgrade compatibility: use the previous app's snapshot until the next app sync.
+        guard let data = UserDefaults(suiteName: appGroupID)?.data(forKey: dataKey),
+              var legacy = try? JSONDecoder().decode(WidgetUniverseData.self, from: data) else {
+            var unavailable = WidgetUniverseData.empty
+            unavailable.syncMessage = "Open app to refresh widget"
+            return unavailable
         }
-
-        do {
-            return try JSONDecoder().decode(
-                WidgetUniverseData.self,
-                from: data
-            )
-        } catch {
-            print("WidgetDataManager: Failed to decode widget data: \(error)")
-            return .empty
-        }
+        legacy.syncMessage = "Older progress · Open app"
+        return legacy
     }
 }

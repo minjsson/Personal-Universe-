@@ -871,7 +871,7 @@ struct EnterChallengeView: View {
         // MARK: Save
 
         do {
-            try modelContext.save()
+            try modelContext.saveWithRecoverySnapshot()
             // 새 챌린지 저장 성공 후에만 이전 알림을 취소합니다.
             for previousChallenge in previousActiveChallenges {
                 NotificationManager.shared.cancelAllReminders(for: previousChallenge)
@@ -905,6 +905,8 @@ struct EnterChallengeView: View {
                             for: challenge
                         )
                 }
+            } else {
+                NotificationManager.shared.cancelAllReminders(for: challenge)
             }
 
             dismiss()

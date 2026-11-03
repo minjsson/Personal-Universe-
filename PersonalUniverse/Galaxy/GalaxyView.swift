@@ -6,6 +6,11 @@
 import SwiftUI
 
 struct GalaxyView: View {
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var isVisible = false
+    private var shouldAnimate: Bool { isAnimated && isVisible && scenePhase == .active && !reduceMotion }
+
     let style: GalaxyStyle
     let progress: Double
     let isCurrent: Bool
@@ -51,11 +56,14 @@ struct GalaxyView: View {
             let scale = availableSize / designSize
 
             galaxyContent
+                .id("\(style.rawValue)-\(shouldAnimate)")
                 .frame(width: designSize, height: designSize)
                 .scaleEffect(scale)
                 .frame(width: geometry.size.width, height: geometry.size.height, alignment: .center)
         }
         .aspectRatio(1, contentMode: .fit)
+        .onAppear { isVisible = true }
+        .onDisappear { isVisible = false }
     }
 
     // MARK: - Galaxy Content
@@ -84,7 +92,7 @@ struct GalaxyView: View {
                     star: star,
                     isCurrent: isCurrent,
                     delay: Double(index) * 0.035,
-                    isAnimated: isAnimated
+                    isAnimated: shouldAnimate
                 )
                 .opacity(revealOpacity(for: star.revealAt))
                 .scaleEffect(revealScale(for: star.revealAt))
@@ -99,7 +107,7 @@ struct GalaxyView: View {
                 GalaxyBodyView(
                     galaxyBody: body,
                     isCurrent: isCurrent,
-                    isAnimated: isAnimated
+                    isAnimated: shouldAnimate
                 )
                 .opacity(revealOpacity(for: body.revealAt))
                 .scaleEffect(revealScale(for: body.revealAt))
@@ -206,20 +214,23 @@ struct GalaxyView: View {
 
     // MARK: - Main Stars
 
-    private var galaxyStars: [GalaxyStar] {
-        switch style {
-        case .expanding:
-            return generateExpandingGalaxy()
-        case .cluster:
-            return generateClusterGalaxy()
-        case .spiral:
-            return generateSpiralGalaxy()
-        }
-    }
+    private static let starsByStyle: [GalaxyStyle: [GalaxyStar]] = [
+        .expanding: generateExpandingGalaxy(),
+        .cluster: generateClusterGalaxy(),
+        .spiral: generateSpiralGalaxy()
+    ]
+    private static let dustByStyle = Dictionary(uniqueKeysWithValues:
+        GalaxyStyle.allCases.map { ($0, generateDust(style: $0)) })
+    private static let bodiesByStyle = Dictionary(uniqueKeysWithValues:
+        GalaxyStyle.allCases.map { ($0, generateBodies(style: $0)) })
+
+    private var galaxyStars: [GalaxyStar] { Self.starsByStyle[style] ?? [] }
+    private var galaxyDust: [GalaxyStar] { Self.dustByStyle[style] ?? [] }
+    private var galaxyBodies: [GalaxyBody] { Self.bodiesByStyle[style] ?? [] }
 
     // MARK: - Expanding Galaxy
 
-    private func generateExpandingGalaxy() -> [GalaxyStar] {
+    private static func generateExpandingGalaxy() -> [GalaxyStar] {
         var generator = SeededRandomNumberGenerator(seed: 3817)
         var stars: [GalaxyStar] = []
 
@@ -359,7 +370,7 @@ struct GalaxyView: View {
 
     // MARK: - Cluster Galaxy
 
-    private func generateClusterGalaxy() -> [GalaxyStar] {
+    private static func generateClusterGalaxy() -> [GalaxyStar] {
         var generator = SeededRandomNumberGenerator(seed: 7241)
         var stars: [GalaxyStar] = []
 
@@ -489,7 +500,7 @@ struct GalaxyView: View {
 
     // MARK: - Spiral Galaxy
 
-    private func generateSpiralGalaxy() -> [GalaxyStar] {
+    private static func generateSpiralGalaxy() -> [GalaxyStar] {
         var generator = SeededRandomNumberGenerator(seed: 9513)
         var stars: [GalaxyStar] = []
 
@@ -579,7 +590,7 @@ struct GalaxyView: View {
 
     // MARK: - Dust
 
-    private var galaxyDust: [GalaxyStar] {
+    private static func generateDust(style: GalaxyStyle) -> [GalaxyStar] {
         let count: Int
         let radius: Double
 
@@ -595,7 +606,7 @@ struct GalaxyView: View {
             radius = 92
         }
 
-        var generator = SeededRandomNumberGenerator(seed: 9137 + UInt64(styleIndex))
+        var generator = SeededRandomNumberGenerator(seed: 9137 + UInt64(styleIndex(style)))
         var result: [GalaxyStar] = []
 
         for _ in 0..<count {
@@ -624,7 +635,7 @@ struct GalaxyView: View {
         return result
     }
 
-    private var styleIndex: Int {
+    private static func styleIndex(_ style: GalaxyStyle) -> Int {
         switch style {
         case .expanding:
             return 1
@@ -637,7 +648,7 @@ struct GalaxyView: View {
 
     // MARK: - Celestial Bodies
 
-    private var galaxyBodies: [GalaxyBody] {
+    private static func generateBodies(style: GalaxyStyle) -> [GalaxyBody] {
         switch style {
         case .expanding:
             return [

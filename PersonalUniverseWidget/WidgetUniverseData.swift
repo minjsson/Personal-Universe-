@@ -27,6 +27,7 @@ struct WidgetDayData: Identifiable, Codable {
 // MARK: - Widget Universe Data
 
 struct WidgetUniverseData: Codable {
+    var syncMessage: String? = nil
     let hasActiveChallenge: Bool
     let title: String
     let galaxyRawValue: String

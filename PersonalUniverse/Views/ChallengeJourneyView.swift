@@ -359,7 +359,7 @@ struct ChallengeJourneyView: View {
     private func saveChanges(reportError: Bool = true) -> Bool {
         guard modelContext.hasChanges else { return true }
         do {
-            try modelContext.save()
+            try modelContext.saveWithRecoverySnapshot()
             return true
         } catch {
             modelContext.rollback()

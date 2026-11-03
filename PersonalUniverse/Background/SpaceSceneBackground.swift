@@ -20,12 +20,18 @@ private struct AmbientSpaceEventLayer: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
 
+    @State private var isVisible = false
+
     var body: some View {
-        if !reduceMotion, scenePhase == .active, let event = scene?.event {
-            TimelineView(.animation(minimumInterval: 1.0 / 30)) { timeline in
-                AmbientSpaceEventView(event: event, date: timeline.date)
+        Group {
+            if isVisible, !reduceMotion, scenePhase == .active, let event = scene?.event {
+                TimelineView(.animation(minimumInterval: 1.0 / 30)) { timeline in
+                    AmbientSpaceEventView(event: event, date: timeline.date)
+                }
             }
         }
+        .onAppear { isVisible = true }
+        .onDisappear { isVisible = false }
     }
 }
 

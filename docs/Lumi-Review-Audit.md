@@ -1,13 +1,13 @@
 # Lumi review audit
 
-## Status: substantial implementation, not a completed review or release sign-off
+## Status: reliability follow-up implemented; not a release sign-off
 
 This audit distinguishes changes made from review points intentionally retained or deferred. The visual feature requests (challenge settings and ambient events) are additional product work; they do not count as completion of every Lumi review item.
 
 | Review point | Evidence / decision | Status |
 |---|---|---|
-| Startup fatalError | `PersistentStoreLoader` reports failure; `DatabaseRootView` offers retry. The original store is neither deleted nor silently replaced with temporary storage. | Implemented; genuinely damaged-store repair is not implemented. |
-| Overall error handling | Main creation, completion, positioning and metadata-saving paths surface failures and stop success-only effects. Reflection input stays in a draft. | Partial: notification scheduling/permission and widget snapshot paths still have diagnostic-only failures. |
+| Startup fatalError | `PersistentStoreLoader` reports failure; `DatabaseRootView` offers retry. The original store is neither deleted nor silently replaced with temporary storage. | Implemented; now includes verified-backup restore with original-file preservation. This is not arbitrary corrupt-data salvage. |
+| Overall error handling | Main creation, completion, positioning and metadata-saving paths surface failures and stop success-only effects. Reflection input stays in a draft. | Implemented for reviewed paths: notification permission/scheduling and widget failures now surface recovery state and retry. |
 | GalaxyPoint initializer | Removed redundant assignments. Kept `let revealAt: Double` because all callers supply it, including nonzero reveal thresholds. The synthesized initializer preserves those calls. | Implemented with behavior preserved. |
 | Suggested `let revealAt = 0` | This is not equivalent to the repository's generator requirements; it would fix the constant and lose the adjustable initialization argument. | Intentionally not applied. |
 | GalaxyBodyView initializer | `_orbitAngle = State(initialValue: galaxyBody.startingAngle)` performs meaningful initialization. | Intentionally retained. |
@@ -16,7 +16,7 @@ This audit distinguishes changes made from review points intentionally retained 
 | Font/opacity constants | Unrelated numerical values were not globally merged. Event appearance values remain local to their rendering owner. | Selective application; not a full design-token audit. |
 | HapticManager Singleton | Existing shared UIKit utility remains. It is not mutable screen state and no concrete replacement requirement was established. | Not converted. Environment is a delivery choice, not a universal requirement. |
 | Initializer / static study | Day 7 note explains static values, shared references, private init, and meaningful custom initialization. | Documented. |
-| View optimization | One window-owned ambient scheduler avoids restarting independent timers across navigation; Reduce Motion and inactive scenes stop ambient animation. | Targeted improvement; no Instruments performance audit or claim of full optimization. |
+| View optimization | One window-owned ambient scheduler avoids restarting independent timers across navigation; Reduce Motion and inactive scenes stop ambient animation. | Targeted optimizations now include Canvas stars, cached galaxy geometry, duplicate backdrop removal, and visibility/lifecycle pauses; no measured FPS claim. |
 | MV versus MVVM | Models retain domain rules; small owners coordinate storage opening and metadata saving. No blanket ViewModel conversion. | Applied as responsibility-based design, not a completed architecture rewrite. |
 | BookMark practice | MV/MVVM source and tests were inspected in Day 6B. | Study comparison done; no claim that the BookMark tests were executed. |
 | TCA / Confluence assignment | The full assignment page was not supplied and TCA was explicitly deferred. | Not completed in this branch. |
@@ -25,7 +25,7 @@ This audit distinguishes changes made from review points intentionally retained 
 
 The app and embedded widget Simulator builds passed. Focused executable regressions cover storage-opening failure followed by success, metadata-saving failure and restoration, blank-title validation, unchanged progress/dates/day membership, nonzero revealAt, and randomized event bounds/variation.
 
-These checks are not a substitute for real-device notification/widget delivery, existing-store migration, actual low-storage behavior, damaged-database recovery, performance profiling, or a full accessibility review. Remaining manual checks are listed in `Lumi-Review-Validation.md`.
+These checks are not a substitute for real-device notification/widget delivery, existing-store migration, actual low-storage behavior, every damage/migration scenario, performance profiling, or a full accessibility review. Remaining manual checks are listed in `Lumi-Review-Validation.md`.
 
 ## Motion-recording method
 
@@ -47,3 +47,7 @@ The normal capture selected quiet waits of 25.48, 23.80, 37.86 and 42.35 seconds
 Representative frames of all three moving objects were inspected. The source confirms stars → ambient events → foreground content, and an opaque settings sheet covered the background during the original demonstration. Transparent foreground regions naturally reveal the backdrop; the clips do not prove collision avoidance for every possible text/layout combination.
 
 Debug and Release app/widget builds passed. The recording selectors/log strings were absent from the inspected Release executable. Focused regression checks passed after the recording instrumentation was added.
+
+## 2026-11-03 recovery follow-up
+
+Database backup/restore, notification/widget recovery and rendering changes are implemented and detailed in [Recovery and view optimization](Recovery-and-View-Optimization.md). The standalone regressions now include real temporary SQLite/WAL files, SwiftData backup reopening, corrupt widget data and injected notification failures. An isolated simulator corruption/restore flow was also checked. This supersedes the former deferred status of those implementation items; device delivery and release verification remain distinct.

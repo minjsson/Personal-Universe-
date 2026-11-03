@@ -31,11 +31,7 @@ struct CompletionEventView: View {
 
     var body: some View {
         ZStack {
-            // MARK: - Space
-
-            SpaceSceneBackground()
-                .ignoresSafeArea()
-                .zIndex(-1)
+            // The containing screen owns the shared space background.
 
             // MARK: - Atmosphere
 
@@ -362,6 +358,7 @@ struct CompletionEventView: View {
         onMyUniverse: {},
         onNewChallenge: {}
     )
+    .background { SpaceSceneBackground().ignoresSafeArea() }
 }
 
 #Preview("Completion — Cluster") {
@@ -372,6 +369,7 @@ struct CompletionEventView: View {
         onMyUniverse: {},
         onNewChallenge: {}
     )
+    .background { SpaceSceneBackground().ignoresSafeArea() }
 }
 
 #Preview("Completion — Spiral") {
@@ -382,4 +380,5 @@ struct CompletionEventView: View {
         onMyUniverse: {},
         onNewChallenge: {}
     )
+    .background { SpaceSceneBackground().ignoresSafeArea() }
 }

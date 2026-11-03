@@ -375,7 +375,7 @@ The existing HapticManager is a shared UIKit utility. Environment injection is a
 - Settings allow title and galaxy-style editing for the current challenge and challenges opened from My Universe. Dates, duration, progress, and reflections remain unchanged. Successful active-challenge edits refresh the widget/reminder data.
 - Growth/completion lighting is brighter. Backgrounds gain occasional decorative meteors, satellites, and stations, separate from challenge events. They pass touches through and stop ambient animation with Reduce Motion or inactive scenes.
 
-These are changes on a separate review branch, not merged or released behavior. Notification permission/scheduling failures and widget snapshot failures still have diagnostic-only paths; this branch is not a complete recovery audit of every subsystem. A permanently damaged database may still need support or a deliberate future recovery feature; retry does not claim to repair it.
+These are changes on a separate review branch, not merged or released behavior. The 2026-11-03 follow-up adds verified-backup restore with original-file preservation, visible notification/widget failures and retries, and targeted rendering optimizations. See [Recovery and view optimization](Recovery-and-View-Optimization.md) for changed files, behavior, tests and limits. Backup restore cannot recover edits newer than the last snapshot or damage for which no good backup exists; it is not universal database repair.
 
 ## 12. Practical checklist
 

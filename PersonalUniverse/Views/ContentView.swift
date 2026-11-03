@@ -144,7 +144,8 @@ struct ContentView: View {
         }
         // MARK: Periodic Refresh
 
-        .task {
+        .task(id: scenePhase) {
+            guard scenePhase == .active else { return }
             while !Task.isCancelled {
                 try? await Task.sleep(
                     for: .seconds(60)
@@ -267,7 +268,7 @@ struct ContentView: View {
         }
 
         do {
-            try modelContext.save()
+            if modelContext.hasChanges { try modelContext.saveWithRecoverySnapshot() }
         } catch {
             modelContext.rollback()
             saveErrorMessage = "Your completed challenge could not be saved. Please try again."
@@ -410,7 +411,7 @@ struct ContentView: View {
         // -------------------------------------------------
 
         do {
-            try modelContext.save()
+            if modelContext.hasChanges { try modelContext.saveWithRecoverySnapshot() }
         } catch {
             modelContext.rollback()
             saveErrorMessage = "Your challenge could not be updated. Please try again."
@@ -436,23 +437,13 @@ struct ContentView: View {
     }
 
     private func refreshNotifications() {
-        guard let challenge = currentChallenge else {
-            return
-        }
-
+        guard let challenge = currentChallenge else { return }
         guard challenge.reminderEnabled else {
+            NotificationManager.shared.cancelAllReminders(for: challenge)
             return
         }
 
         Task { @MainActor in
-            let granted =
-                await NotificationManager.shared
-                    .requestPermission()
-
-            guard granted else {
-                return
-            }
-
             await NotificationManager.shared
                 .scheduleCurrentReminder(
                     for: challenge

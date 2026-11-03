@@ -35,10 +35,6 @@ struct CurrentChallengeView: View {
 
     var body: some View {
         ZStack {
-            SpaceSceneBackground()
-                .ignoresSafeArea()
-                .zIndex(-1)
-
             VStack(spacing: 32) {
                 Spacer()
 
@@ -276,7 +272,7 @@ struct CurrentChallengeView: View {
     private func saveChanges(reportError: Bool = true) -> Bool {
         guard modelContext.hasChanges else { return true }
         do {
-            try modelContext.save()
+            try modelContext.saveWithRecoverySnapshot()
             return true
         } catch {
             modelContext.rollback()
@@ -302,6 +298,7 @@ struct CurrentChallengeView: View {
             onDayCompleted: { _ in }
         )
     }
+    .background { SpaceSceneBackground().ignoresSafeArea() }
     .modelContainer(
         for: [
             UniverseChallenge.self,

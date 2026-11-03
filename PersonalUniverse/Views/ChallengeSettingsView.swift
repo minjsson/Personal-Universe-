@@ -60,7 +60,7 @@ struct ChallengeSettingsView: View {
         do {
             try ChallengeMetadataEditor.save(
                 challenge: challenge, title: draftTitle, galaxy: draftGalaxy,
-                persist: { try context.save() }
+                persist: { try context.saveWithRecoverySnapshot() }
             )
             // 저장된 데이터만 위젯과 알림에 반영합니다.
             if challenge.status == .active {

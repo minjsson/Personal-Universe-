@@ -600,7 +600,7 @@ struct MyUniverseView: View {
 
     private func saveChanges() {
         do {
-            try modelContext.save()
+            try modelContext.saveWithRecoverySnapshot()
         } catch {
             modelContext.rollback()
             saveErrorMessage = "Galaxy positions could not be saved. Reopen this screen to try again."
