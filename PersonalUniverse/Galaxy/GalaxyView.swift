@@ -125,8 +125,8 @@ struct GalaxyView: View {
             .fill(
                 RadialGradient(
                     colors: [
-                        .white.opacity(isCurrent ? 0.09 : 0.035),
-                        .white.opacity(0.015),
+                        .white.opacity(isCurrent ? 0.18 : 0.035),
+                        .white.opacity(isCurrent ? 0.045 : 0.015),
                         .clear
                     ],
                     center: .center,

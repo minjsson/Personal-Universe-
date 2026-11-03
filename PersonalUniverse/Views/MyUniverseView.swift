@@ -380,8 +380,8 @@ struct MyUniverseView: View {
                     .fill(
                         RadialGradient(
                             colors: [
-                                .white.opacity(0.14),
-                                .white.opacity(0.05),
+                                .white.opacity(0.22),
+                                .white.opacity(0.065),
                                 .clear
                             ],
                             center: .center,
@@ -398,7 +398,7 @@ struct MyUniverseView: View {
 
                 Circle()
                     .stroke(
-                        .white.opacity(0.10),
+                        .white.opacity(0.20),
                         lineWidth: 1
                     )
                     .frame(

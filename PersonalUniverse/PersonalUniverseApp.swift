@@ -5,7 +5,15 @@ import SwiftData
 struct PersonalUniverseApp: App {
     var body: some Scene {
         WindowGroup {
+            #if DEBUG
+            if ProcessInfo.processInfo.arguments.contains("--lighting-review") {
+                UniverseLightingReview()
+            } else {
+                DatabaseRootView()
+            }
+            #else
             DatabaseRootView()
+            #endif
         }
     }
 }

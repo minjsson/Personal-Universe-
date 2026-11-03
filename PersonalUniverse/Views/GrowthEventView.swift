@@ -28,8 +28,8 @@ struct GrowthEventView: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            .white.opacity(appeared ? 0.20 : 0),
-                            .white.opacity(0.035),
+                            .white.opacity(appeared ? 0.30 : 0),
+                            .white.opacity(0.055),
                             .clear
                         ],
                         center: .center,
@@ -38,7 +38,7 @@ struct GrowthEventView: View {
                     )
                 )
                 .frame(width: 320, height: 320)
-                .blur(radius: 28)
+                .blur(radius: 20)
 
             // MARK: - Revealed Galaxy
 
@@ -56,8 +56,8 @@ struct GrowthEventView: View {
 
             Circle()
                 .stroke(
-                    .white.opacity(pulse ? 0 : 0.45),
-                    lineWidth: 1
+                    .white.opacity(pulse ? 0 : 0.70),
+                    lineWidth: 1.4
                 )
                 .frame(
                     width: pulse ? 280 : 40,
@@ -66,17 +66,19 @@ struct GrowthEventView: View {
                 .opacity(pulse ? 0 : 1)
         }
         .frame(width: 340, height: 340)
+        .clipped()
         .allowsHitTesting(false)
         .task(id: shouldAnimate) {
-            guard shouldAnimate else {
+            guard !reduceMotion else {
                 withTransaction(Transaction(animation: nil)) { appeared = true; pulse = true }
                 return
             }
+            guard scenePhase == .active else { return }
             withAnimation(.easeOut(duration: 0.8)) {
                 appeared = true
             }
 
-            withAnimation(.easeOut(duration: 1.2).delay(0.15)) {
+            withAnimation(.easeOut(duration: 1.5).delay(0.15)) {
                 pulse = true
             }
         }
