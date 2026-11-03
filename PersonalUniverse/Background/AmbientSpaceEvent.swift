@@ -15,6 +15,7 @@ struct AmbientSpaceEvent {
     let tilt: Double
 
     static func random<R: RandomNumberGenerator>(
+        kind requestedKind: Kind? = nil,
         after previous: Kind?,
         at date: Date = .now,
         using generator: inout R
@@ -22,7 +23,7 @@ struct AmbientSpaceEvent {
         // 유성은 자주, 인공 구조물은 드물게 나타납니다. 같은 종류의 연속은 피합니다.
         let candidates: [Kind] = [.meteor, .meteor, .meteor, .meteor, .satellite, .satellite, .station]
             .filter { $0 != previous }
-        let kind = candidates.randomElement(using: &generator) ?? .meteor
+        let kind = requestedKind ?? candidates.randomElement(using: &generator) ?? .meteor
         let leftToRight = Bool.random(using: &generator)
         let startY = CGFloat.random(in: 0.12...0.78, using: &generator)
         let endY = min(max(startY + CGFloat.random(in: -0.24...0.24, using: &generator), 0.08), 0.85)

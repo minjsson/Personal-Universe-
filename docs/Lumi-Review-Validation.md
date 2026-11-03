@@ -33,3 +33,7 @@ No destructive database reset or automatic in-memory fallback is introduced. Not
 ## Ambient event follow-up
 
 The initial cyan/six-second effects were replaced by the cohesive monochrome designs and window-scoped varied scheduler described in [Ambient event refinement](Ambient-Event-Design.md). The Simulator build and the expanded seeded regression checks passed. A static render of the actual event/galaxy Views was visually inspected; real-time timing and device brightness are still manual checks.
+
+## In-app motion evidence
+
+The three effects were recorded in the isolated simulator, with a separate approximately three-minute normal-cadence capture. Selected frames were inspected and an opaque settings sheet was observed to hide the backdrop. Recording method, sample timings, and remaining limits are documented in [Lumi review audit](Lumi-Review-Audit.md). This improves visual evidence but does not replace a real-device brightness/accessibility/performance review.
