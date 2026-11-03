@@ -10,6 +10,9 @@ struct ChallengeSettingsView: View {
     @State private var errorMessage: String?
     @State private var confirmDiscard = false
     @FocusState private var editingTitle: Bool
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @State private var contentHeight: CGFloat = 330
+    @State private var headerHeight: CGFloat = 64
 
     init(challenge: UniverseChallenge) {
         self.challenge = challenge
@@ -24,64 +27,57 @@ struct ChallengeSettingsView: View {
         ZStack {
             UniverseQuietBackground()
             VStack(spacing: 0) {
-                HStack {
-                    Button("Cancel") {
-                        if hasChanges { confirmDiscard = true } else { dismiss() }
+                VStack(spacing: 0) {
+                    if dynamicTypeSize.isAccessibilitySize {
+                        VStack(spacing: 8) {
+                            Text("Edit challenge").font(.headline)
+                            HStack { cancelButton; Spacer(); saveButton }
+                        }
+                    } else {
+                        HStack(spacing: 8) {
+                            cancelButton.frame(width: 72)
+                            Text("Edit challenge")
+                                .font(.headline)
+                                .frame(maxWidth: .infinity)
+                            saveButton.frame(width: 72)
+                        }
                     }
-                    .font(.subheadline)
-                    .foregroundStyle(.white.opacity(0.6))
-                    .frame(minWidth: 44, minHeight: 44)
-                    .buttonStyle(.plain)
-                    Spacer()
-                    Button("Save", action: save)
-                        .buttonStyle(UniverseButtonStyle(prominent: true))
-                        .disabled(cleanTitle.isEmpty || !hasChanges)
+                    if let errorMessage {
+                        UniverseNotice(title: "Unable to save", message: errorMessage, compact: true) {
+                            Button("Try again", action: save)
+                                .buttonStyle(UniverseButtonStyle(prominent: true))
+                        }
+                        .padding(.top, 16)
+                    }
                 }
+                .foregroundStyle(.white.opacity(0.9))
                 .padding(.horizontal, 24)
                 .padding(.top, 20)
-
-                if let errorMessage {
-                    UniverseNotice(title: "Unable to save", message: errorMessage, compact: true) {
-                        Button("Try again", action: save)
-                            .buttonStyle(UniverseButtonStyle(prominent: true))
-                    }
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 24)
-                    .padding(.top, 20)
-                }
+                .padding(.bottom, 20)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
 
                 ScrollView {
-                    VStack(spacing: 32) {
-                        VStack(spacing: 10) {
-                            Text("Your challenge")
-                                .font(.title2.weight(.medium))
-                                .foregroundStyle(.white.opacity(0.9))
-                            Text("A name. A shape. The same journey.")
-                                .font(.subheadline)
-                                .foregroundStyle(.white.opacity(0.55))
-                        }
-                        .padding(.top, 22)
-
-                        VStack(spacing: 12) {
-                            sectionLabel("NAME")
+                    VStack(alignment: .leading, spacing: 24) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            sectionLabel("Challenge name")
                             TextField("Challenge name", text: $draftTitle, axis: .vertical)
-                                .font(.title3.weight(.medium))
+                                .font(.body.weight(.medium))
                                 .foregroundStyle(.white)
                                 .tint(.white.opacity(0.7))
-                                .multilineTextAlignment(.center)
+                                .multilineTextAlignment(.leading)
                                 .lineLimit(1...3)
                                 .focused($editingTitle)
                                 .submitLabel(.done)
                                 .onSubmit { editingTitle = false }
                                 .padding(.horizontal, 16)
-                                .padding(.vertical, 18)
+                                .padding(.vertical, 14)
                                 .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 16))
                                 .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(editingTitle ? 0.28 : 0.12), lineWidth: 0.7) }
                                 .accessibilityLabel("Challenge name")
                         }
 
-                        VStack(spacing: 16) {
-                            sectionLabel("UNIVERSE")
+                        VStack(alignment: .leading, spacing: 12) {
+                            sectionLabel("Universe appearance")
                             LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 10)], spacing: 10) {
                                 ForEach(GalaxyStyle.allCases, id: \.self) { style in
                                     styleChoice(style)
@@ -89,16 +85,22 @@ struct ChallengeSettingsView: View {
                             }
                         }
 
-                        Text("Your dates, progress and reflections stay with you.")
-                            .font(.footnote)
-                            .foregroundStyle(.white.opacity(0.5))
-                            .lineSpacing(3)
-                            .multilineTextAlignment(.center)
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("Only the name and appearance change.")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(.white.opacity(0.85))
+                            Text("Your dates, progress and reflections are preserved.")
+                                .font(.subheadline)
+                                .foregroundStyle(.white.opacity(0.7))
+                        }
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
 
                     }
                     .frame(maxWidth: 430)
                     .padding(.horizontal, 24)
-                    .padding(.bottom, 32)
+                    .padding(.bottom, 24)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
                     .frame(maxWidth: .infinity)
                 }
                 .scrollDismissesKeyboard(.interactively)
@@ -111,17 +113,35 @@ struct ChallengeSettingsView: View {
             Button("Discard changes", role: .destructive) { dismiss() }
             Button("Keep editing", role: .cancel) {}
         }
-        .presentationDetents([.fraction(0.75), .large])
+        .presentationDetents([.height(max(340, headerHeight + contentHeight + 20)), .large])
         .presentationBackground(.black)
         .presentationDragIndicator(.visible)
         .preferredColorScheme(.dark)
     }
 
+    private var cancelButton: some View {
+        Button("Cancel") {
+            if hasChanges { confirmDiscard = true } else { dismiss() }
+        }
+        .font(.subheadline)
+        .foregroundStyle(.white.opacity(0.7))
+        .frame(minHeight: 44)
+        .buttonStyle(.plain)
+    }
+
+    private var saveButton: some View {
+        Button("Save", action: save)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.white.opacity(cleanTitle.isEmpty || !hasChanges ? 0.3 : 0.95))
+            .frame(minHeight: 44)
+            .buttonStyle(.plain)
+            .disabled(cleanTitle.isEmpty || !hasChanges)
+    }
+
     private func sectionLabel(_ title: String) -> some View {
         Text(title)
-            .font(.caption.weight(.medium))
-            .tracking(2)
-            .foregroundStyle(.white.opacity(0.5))
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(.white.opacity(0.7))
     }
 
     private func styleChoice(_ style: GalaxyStyle) -> some View {
@@ -142,7 +162,16 @@ struct ChallengeSettingsView: View {
             .frame(maxWidth: .infinity)
             .padding(.top, 8)
             .background(.white.opacity(selected ? 0.05 : 0.015), in: RoundedRectangle(cornerRadius: 16))
-            .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(selected ? 0.3 : 0.07), lineWidth: 0.7) }
+            .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(selected ? 0.55 : 0.13), lineWidth: selected ? 1 : 0.7) }
+            .overlay(alignment: .topTrailing) {
+                if selected {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(.black, .white.opacity(0.9))
+                        .padding(8)
+                        .accessibilityHidden(true)
+                }
+            }
         }
         .buttonStyle(.plain)
         .accessibilityLabel(style.name)

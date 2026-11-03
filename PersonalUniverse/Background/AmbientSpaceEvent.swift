@@ -35,12 +35,12 @@ struct AmbientSpaceEvent {
         return Self(
             kind: kind,
             startedAt: date,
-            duration: Double.random(in: kind == .meteor ? 0.9...1.8 : (kind == .satellite ? 10...17 : 18...26), using: &generator),
+            duration: Double.random(in: kind == .meteor ? 1.3...2.1 : (kind == .satellite ? 10...17 : 18...26), using: &generator),
             start: CGPoint(x: leftToRight ? -0.25 : 1.25, y: startY),
             end: CGPoint(x: leftToRight ? 1.25 : -0.25, y: endY),
             arc: kind == .meteor ? 0 : CGFloat.random(in: -upwardRoom...downwardRoom, using: &generator),
-            size: CGFloat.random(in: kind == .meteor ? 38...80 : (kind == .satellite ? 14...19 : 38...48), using: &generator),
-            brightness: Double.random(in: kind == .meteor ? 0.40...0.65 : 0.24...0.42, using: &generator),
+            size: CGFloat.random(in: kind == .meteor ? 55...90 : (kind == .satellite ? 20...25 : 44...56), using: &generator),
+            brightness: Double.random(in: kind == .meteor ? 0.75...0.90 : (kind == .satellite ? 0.55...0.70 : 0.48...0.64), using: &generator),
             tilt: Double.random(in: -35...35, using: &generator)
         )
     }
@@ -92,13 +92,13 @@ struct AmbientSpaceEventView: View {
         ZStack(alignment: .trailing) {
             Capsule()
                 .fill(LinearGradient(
-                    colors: [.clear, .white.opacity(0.15), .white.opacity(0.7)],
+                    colors: [.clear, .white.opacity(0.25), .white.opacity(0.95)],
                     startPoint: .leading, endPoint: .trailing
                 ))
-                .frame(width: event.size, height: 0.7)
+                .frame(width: event.size, height: 1.1)
             Circle()
                 .fill(.white)
-                .frame(width: 1.8, height: 1.8)
+                .frame(width: 2.4, height: 2.4)
                 .shadow(color: .white.opacity(0.45), radius: 3)
         }
     }
@@ -110,13 +110,13 @@ struct AmbientSpaceEventView: View {
             var truss = Path()
             truss.move(to: CGPoint(x: size.width * 0.08, y: center.y))
             truss.addLine(to: CGPoint(x: size.width * 0.92, y: center.y))
-            context.stroke(truss, with: .color(.white.opacity(0.65)), lineWidth: 0.6)
+            context.stroke(truss, with: .color(.white.opacity(0.85)), lineWidth: 0.9)
 
             if event.kind == .satellite {
                 // 작은 본체, 두 날개, 접시형 안테나로 구별합니다.
                 for x in [size.width * 0.06, size.width * 0.68] {
                     let panel = CGRect(x: x, y: size.height * 0.38, width: size.width * 0.26, height: size.height * 0.34)
-                    context.stroke(Path(roundedRect: panel, cornerRadius: 0.5), with: .color(.white.opacity(0.75)), lineWidth: 0.6)
+                    context.stroke(Path(roundedRect: panel, cornerRadius: 0.5), with: .color(.white.opacity(0.9)), lineWidth: 0.9)
                 }
                 let body = CGRect(x: center.x - 1.6, y: center.y - 2.2, width: 3.2, height: 4.4)
                 context.fill(Path(roundedRect: body, cornerRadius: 0.8), with: .color(.white.opacity(0.85)))
@@ -128,19 +128,19 @@ struct AmbientSpaceEventView: View {
                     to: CGPoint(x: center.x + 4, y: size.height * 0.24),
                     control: CGPoint(x: center.x + 0.5, y: size.height * 0.44)
                 )
-                context.stroke(antenna, with: .color(.white.opacity(0.8)), lineWidth: 0.6)
+                context.stroke(antenna, with: .color(.white.opacity(0.8)), lineWidth: 0.9)
             } else {
                 // 긴 트러스, 네 쌍의 세로 패널, 여러 모듈로 정거장 실루엣을 만듭니다.
                 for fraction in [0.12, 0.32, 0.68, 0.88] {
                     let x = size.width * fraction
                     for y in [size.height * 0.10, size.height * 0.60] {
                         let panel = CGRect(x: x - size.width * 0.055, y: y, width: size.width * 0.11, height: size.height * 0.30)
-                        context.stroke(Path(panel), with: .color(.white.opacity(0.75)), lineWidth: 0.6)
+                        context.stroke(Path(panel), with: .color(.white.opacity(0.9)), lineWidth: 0.9)
                     }
                     var support = Path()
                     support.move(to: CGPoint(x: x, y: size.height * 0.38))
                     support.addLine(to: CGPoint(x: x, y: size.height * 0.62))
-                    context.stroke(support, with: .color(.white.opacity(0.65)), lineWidth: 0.6)
+                    context.stroke(support, with: .color(.white.opacity(0.85)), lineWidth: 0.9)
                 }
                 let core = CGRect(x: size.width * 0.40, y: center.y - 1.8, width: size.width * 0.20, height: 3.6)
                 context.fill(Path(roundedRect: core, cornerRadius: 1), with: .color(.white.opacity(0.8)))
@@ -153,6 +153,6 @@ struct AmbientSpaceEventView: View {
             }
         }
         .frame(width: event.size, height: event.size * 0.55)
-        .shadow(color: .white.opacity(0.12), radius: 2)
+        .shadow(color: .white.opacity(0.22), radius: 2.5)
     }
 }

@@ -10,7 +10,7 @@ The first version used cyan panels and the same six-second traversal for every e
 
 ## Motion and timing
 
-- Meteors last 0.9–1.8 seconds, satellites 10–17 seconds, and stations 18–26 seconds.
+- Meteors last 1.3–2.1 seconds, satellites 10–17 seconds, and stations 18–26 seconds.
 - Each event gets a stable randomized size, brightness, height, direction and path. Spacecraft use shallow curved passes; meteor tails align with their travel direction.
 - The scheduler mixes 10–28, 35–65 and occasional 80–120 second quiet periods. The next type differs from the last; weighted selection favors meteors over stations.
 - One environment-injected AmbientSpaceScene belongs to the app window, so navigating between pages does not restart the schedule. No global Singleton is introduced.
@@ -38,8 +38,12 @@ The first two are grouped in `SpaceSceneBackground`, placed at zIndex -1 relativ
 
 ## Satellite versus station silhouettes
 
-The satellite now has a compact body, two panel wings and a small dish antenna (14–19 points wide). The station uses a long truss, four vertical panel pairs and connected modules (38–48 points wide). Their existing different motion speeds remain. Both retain the same restrained white-line material and background layering. The revised actual Views were rendered side by side and inspected; the app/widget build passed.
+The satellite now has a compact body, two panel wings and a small dish antenna (20–25 points wide). The station uses a long truss, four vertical panel pairs and connected modules (44–56 points wide). Their existing different motion speeds remain. Both retain the same restrained white-line material and background layering. The revised actual Views were rendered side by side and inspected; the app/widget build passed.
 
 ## Whole-scene placement follow-up
 
 The 2026-11-03 [visual cohesion review](Visual-Cohesion.md) adds deliberate upper/middle/lower lanes, including 80–94% scene-height passes, and constrains the full arc to its lane. The same report documents detail-only editing and the matching recovery/settings treatment.
+
+## Visibility correction after user review
+
+The previous thin, multiply-faded strokes were too difficult to see in the delivered recording. Spacecraft now use 0.9-point outlines, higher per-event opacity and modestly larger silhouettes; meteors have a brighter 1.1-point tail/head and a 1.3–2.1s pass. Background z-order, tap pass-through, lane coverage, varied spacecraft speeds and normal quiet waits are retained. This adjustment follows the compact edit-sheet revision rather than changing completion-event or active-galaxy brightness in this task.

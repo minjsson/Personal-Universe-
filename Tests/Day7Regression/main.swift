@@ -94,12 +94,15 @@ func runChecks() throws {
         rightToLeft = rightToLeft || event.start.x > event.end.x
         switch event.kind {
         case .meteor:
+            precondition((0.75...0.90).contains(event.brightness) && (55...90).contains(event.size))
             seenKinds.insert(0)
-            precondition((0.9...1.8).contains(event.duration) && event.arc == 0)
+            precondition((1.3...2.1).contains(event.duration) && event.arc == 0)
         case .satellite:
+            precondition((0.55...0.70).contains(event.brightness) && (20...25).contains(event.size))
             seenKinds.insert(1)
             precondition((10...17).contains(event.duration))
         case .station:
+            precondition((0.48...0.64).contains(event.brightness) && (44...56).contains(event.size))
             seenKinds.insert(2)
             precondition((18...26).contains(event.duration))
         }
