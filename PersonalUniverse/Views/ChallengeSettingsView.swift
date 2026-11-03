@@ -10,7 +10,6 @@ struct ChallengeSettingsView: View {
     @State private var errorMessage: String?
     @State private var confirmDiscard = false
     @FocusState private var editingTitle: Bool
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var contentHeight: CGFloat = 330
     @State private var headerHeight: CGFloat = 64
 
@@ -27,21 +26,17 @@ struct ChallengeSettingsView: View {
         ZStack {
             UniverseQuietBackground()
             VStack(spacing: 0) {
-                VStack(spacing: 0) {
-                    if dynamicTypeSize.isAccessibilitySize {
-                        VStack(spacing: 8) {
-                            Text("Edit challenge").font(.headline)
-                            HStack { cancelButton; Spacer(); saveButton }
-                        }
-                    } else {
-                        HStack(spacing: 8) {
-                            cancelButton.frame(width: 72)
-                            Text("Edit challenge")
-                                .font(.headline)
-                                .frame(maxWidth: .infinity)
-                            saveButton.frame(width: 72)
-                        }
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack {
+                        cancelButton
+                        Spacer(minLength: 24)
+                        saveButton
                     }
+                    Text("Edit challenge")
+                        .font(.title2.weight(.medium))
+                        .foregroundStyle(.white)
+                        .accessibilityAddTraits(.isHeader)
+                        .fixedSize(horizontal: false, vertical: true)
                     if let errorMessage {
                         UniverseNotice(title: "Unable to save", message: errorMessage, compact: true) {
                             Button("Try again", action: save)
@@ -52,7 +47,7 @@ struct ChallengeSettingsView: View {
                 }
                 .foregroundStyle(.white.opacity(0.9))
                 .padding(.horizontal, 24)
-                .padding(.top, 20)
+                .padding(.top, 12)
                 .padding(.bottom, 20)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
 
@@ -69,10 +64,12 @@ struct ChallengeSettingsView: View {
                                 .focused($editingTitle)
                                 .submitLabel(.done)
                                 .onSubmit { editingTitle = false }
-                                .padding(.horizontal, 16)
                                 .padding(.vertical, 14)
-                                .background(.white.opacity(0.035), in: RoundedRectangle(cornerRadius: 16))
-                                .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(editingTitle ? 0.28 : 0.12), lineWidth: 0.7) }
+                                .overlay(alignment: .bottom) {
+                                    Rectangle()
+                                        .fill(.white.opacity(editingTitle ? 0.5 : 0.2))
+                                        .frame(height: 1)
+                                }
                                 .accessibilityLabel("Challenge name")
                         }
 
