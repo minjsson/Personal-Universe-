@@ -121,7 +121,7 @@ struct MyUniverseView: View {
                 }
             }
         }
-        .saveErrorAlert($saveErrorMessage)
+        .saveErrorNotice($saveErrorMessage)
         .navigationTitle("My Universe")
         .navigationBarTitleDisplayMode(.inline)
 
@@ -252,6 +252,10 @@ struct MyUniverseView: View {
 
                 selectedChallenge = challenge
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Open \(challenge.title)")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { selectedChallenge = challenge }
 
             // MARK: Title
 
@@ -311,6 +315,10 @@ struct MyUniverseView: View {
 
                 selectedChallenge = challenge
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Open \(challenge.title)")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { selectedChallenge = challenge }
 
             // MARK: Title
 

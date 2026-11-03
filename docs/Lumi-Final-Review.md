@@ -16,7 +16,7 @@
 | struct의 불필요한 init 확인 | GalaxyPoint뿐 아니라 누락됐던 GalaxyStar·GalaxyBody의 대입 전용 init도 제거. 모든 호출이 revealAt을 명시하는지 확인 | 이번 재점검에서 보완 |
 | GalaxyBodyView init 확인 | `_orbitAngle = State(initialValue: galaxyBody.startingAngle)`이 실제 역할을 하므로 유지 | 검토 후 유지 |
 | GalaxyOrbitModifier 미사용 | 소스·호출부·프로젝트에서 제거 상태 재확인 | 반영 |
-| 심벌 이름 등의 상수화 | app/widget sparkle 및 설정·앞/뒤 이동 심벌을 UniverseSymbols로 중앙 관리. 문자열 값 자체의 오타까지 컴파일러가 보증하는 것은 아님 | 필요한 공통 심벌에 반영 |
+| 심벌 이름 등의 상수화 | app/widget sparkle 및 앞/뒤 이동 심벌을 UniverseSymbols로 중앙 관리. 문자열 값 자체의 오타까지 컴파일러가 보증하는 것은 아님 | 필요한 공통 심벌에 반영 |
 | font size·opacity 등 | 기존 의미 있는 레이아웃 상수는 유지. 같은 숫자라는 이유만으로 다른 역할의 값을 한 상수로 합치지 않음 | 선별 적용; 모든 리터럴 제거가 목표는 아님 |
 | Singleton·static·init·Environment 공부 | Day 7 노트에 정리. HapticManager는 기존의 작은 공유 UIKit 유틸리티로 유지. 환경 주입으로 일괄 교체하라는 필수 수정으로 해석하지 않음 | 학습 정리·설계 판단 완료, 변환은 하지 않음 |
 | 뷰 최적화 | Canvas 별 배경, 스타일별 불변 은하 데이터 캐시, 중복 배경 제거, 화면/앱 상태에 따른 중지. 완료 연출의 지연 작업도 View 생명주기로 관리 | 실제 반복 작업을 줄이는 변경 반영 |
@@ -54,3 +54,5 @@ GalaxyPoint만 정리되어 있던 대입 전용 init을 GalaxyStar·GalaxyBody�
 백업 복구와 위젯 저장 방식의 자세한 설명은 [구현 보고서](Recovery-and-View-Optimization.md)에 있습니다. 학습 내용은 [Day 7 노트](Day-7-Study-Review.md)에 있습니다. 같은 리뷰 브랜치에서 작업하며 PR·머지는 하지 않습니다.
 
 최종 실행 결과: Debug·Release 앱/위젯 빌드 모두 경고 없이 성공, 전체 회귀 실행기 성공, `git diff --check` 통과. 이전 알림 코드 비교 실행은 완료 중 예약 실패 검사에서 의도대로 실패했습니다. 수정된 프로덕션 코드에서는 같은 검사와 최신 제목 예약 순서 검사 모두 통과했습니다.
+
+후속 시각 디자인 변경에서 설정 아이콘은 제거하고 My Universe의 챌린지 상세에 Edit 동작을 배치했습니다. 공통 오류/설정 스타일과 이벤트 렌더링 보완은 [Visual cohesion](Visual-Cohesion.md)에 기록했습니다.

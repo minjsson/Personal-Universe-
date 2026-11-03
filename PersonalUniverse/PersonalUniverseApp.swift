@@ -14,7 +14,9 @@ struct PersonalUniverseApp: App {
 struct DatabaseRootView: View {
     @State private var store = PersistentStoreLoader()
     @State private var confirmRestore = false
+    @State private var isRetryingServices = false
     @Environment(\.openURL) private var openURL
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var ambientScene = AmbientSpaceScene()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
@@ -56,28 +58,50 @@ struct DatabaseRootView: View {
                 ContentView()
                     .modelContainer(container)
             } else {
-                ContentUnavailableView {
-                    Label("Unable to open your universe", systemImage: "externaldrive.badge.exclamationmark")
-                } description: {
-                    Text(store.errorMessage ?? "Opening your saved challenges…")
-                } actions: {
-                    if store.isLoading {
-                        ProgressView()
-                    } else {
-                        Button("Try again", action: store.open)
-                            .buttonStyle(.borderedProminent)
-                        if store.errorMessage != nil && store.backupDate == nil {
-                            Text("No recovery backup is available yet. Your existing database has not been reset.")
-                                .font(.footnote)
-                        }
-                        if let date = store.backupDate {
-                            Button("Restore backup from \(date.formatted(date: .abbreviated, time: .shortened))") {
-                                confirmRestore = true
+                ZStack {
+                    UniverseQuietBackground()
+                    GeometryReader { geometry in
+                        ScrollView {
+                            VStack(spacing: 24) {
+                                Circle()
+                                    .fill(.white.opacity(0.8))
+                                    .frame(width: 3, height: 3)
+                                    .shadow(color: .white.opacity(0.35), radius: 12)
+                                    .accessibilityHidden(true)
+                                UniverseNotice(
+                                    title: store.errorMessage == nil ? "Opening your universe" : "Unable to open your universe",
+                                    message: store.errorMessage ?? "Your saved journey will be here shortly."
+                                ) {
+                                    if store.isLoading || store.errorMessage == nil {
+                                        ProgressView().tint(.white.opacity(0.65))
+                                    } else {
+                                        VStack(spacing: 16) {
+                                            Button("Try again", action: store.open)
+                                                .buttonStyle(UniverseButtonStyle(prominent: true))
+                                            if let date = store.backupDate {
+                                                VStack(spacing: 10) {
+                                                    Button("Restore backup") { confirmRestore = true }
+                                                        .buttonStyle(UniverseButtonStyle())
+                                                    Text(date.formatted(date: .abbreviated, time: .shortened))
+                                                        .font(.caption)
+                                                        .foregroundStyle(.white.opacity(0.5))
+                                                }
+                                            } else {
+                                                Text("No recovery backup is available yet. Your database has not been reset.")
+                                                    .font(.footnote)
+                                                    .foregroundStyle(.white.opacity(0.5))
+                                            }
+                                        }
+                                    }
+                                }
                             }
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 28)
+                            .padding(.vertical, 48)
+                            .frame(minHeight: geometry.size.height)
                         }
                     }
                 }
-                .padding()
             }
         }
     }
@@ -87,30 +111,39 @@ struct DatabaseRootView: View {
         let notifications = NotificationManager.shared
         let widget = WidgetSyncManager.status
         let messages = [store.backupError, notifications.errorMessage, widget.errorMessage].compactMap { $0 }
+        let actionsLayout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 12)) : AnyLayout(HStackLayout(spacing: 12))
         if !messages.isEmpty {
-            VStack(alignment: .leading, spacing: 8) {
-                ForEach(messages, id: \.self) { Text($0).font(.footnote) }
-                HStack {
-                    Button("Try again") {
+            UniverseNotice(title: "Updates need attention", message: messages.joined(separator: "\n\n"), compact: true) {
+                actionsLayout {
+                    Button {
+                        guard !isRetryingServices else { return }
+                        isRetryingServices = true
                         Task {
+                            defer { isRetryingServices = false }
                             if store.backupError != nil { await store.updateBackup() }
                             if notifications.errorMessage != nil { await notifications.retry() }
                             if widget.errorMessage != nil { WidgetSyncManager.retry() }
                         }
+                    } label: {
+                        if isRetryingServices { ProgressView().tint(.white) }
+                        else { Text("Try again") }
                     }
+                    .buttonStyle(UniverseButtonStyle(prominent: true))
+                    .disabled(isRetryingServices)
                     if notifications.permissionDenied {
                         Button("Open Settings") {
                             if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
                         }
+                        .buttonStyle(UniverseButtonStyle())
                     }
                 }
-                .buttonStyle(.bordered)
             }
-            .padding(12)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(.regularMaterial)
-            .accessibilityElement(children: .contain)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 20)
+            .frame(maxWidth: .infinity)
+            .background(.black)
+            .overlay(alignment: .top) { Rectangle().fill(.white.opacity(0.1)).frame(height: 0.5) }
         }
     }
-
 }

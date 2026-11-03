@@ -22,7 +22,6 @@ struct CurrentChallengeView: View {
     // MARK: - State
 
     @State private var selectedDay: ChallengeDay?
-    @State private var showSettings = false
     @State private var saveErrorMessage: String?
 
     // MARK: - Calendar
@@ -81,18 +80,7 @@ struct CurrentChallengeView: View {
 
         // MARK: Reflection Sheet
 
-        .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
-                Button { showSettings = true } label: {
-                    Image(systemName: UniverseSymbols.challengeSettings)
-                }
-                .accessibilityLabel("Challenge settings")
-            }
-        }
-        .sheet(isPresented: $showSettings) {
-            ChallengeSettingsView(challenge: challenge)
-        }
-        .saveErrorAlert($saveErrorMessage)
+        .saveErrorNotice($saveErrorMessage)
         .sheet(item: $selectedDay) { day in
             dayReflectionView(for: day)
                 .presentationDetents([.fraction(0.40)])

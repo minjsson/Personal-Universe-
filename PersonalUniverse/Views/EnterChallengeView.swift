@@ -104,7 +104,7 @@ struct EnterChallengeView: View {
                 bottomNavigation
             }
         }
-        .saveErrorAlert($saveErrorMessage)
+        .saveErrorNotice($saveErrorMessage)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)

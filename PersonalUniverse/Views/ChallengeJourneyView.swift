@@ -70,16 +70,20 @@ struct ChallengeJourneyView: View {
         // MARK: Reflection Sheet
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                Button { showSettings = true } label: {
-                    Image(systemName: UniverseSymbols.challengeSettings)
+                if activeEvent == .none {
+                    Button("Edit") { showSettings = true }
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.65))
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Edit challenge")
                 }
-                .accessibilityLabel("Challenge settings")
             }
+            .sharedBackgroundVisibility(.hidden)
         }
         .sheet(isPresented: $showSettings) {
             ChallengeSettingsView(challenge: challenge)
         }
-        .saveErrorAlert($saveErrorMessage)
+        .saveErrorNotice($saveErrorMessage)
         .sheet(item: $selectedDay) { day in
             dayReflectionView(for: day)
                 .presentationDetents([.fraction(0.40)])

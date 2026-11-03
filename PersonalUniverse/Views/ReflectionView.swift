@@ -154,7 +154,7 @@ struct ReflectionView: View {
             Button("Discard", role: .destructive) { dismiss() }
             Button("Keep writing", role: .cancel) {}
         }
-        .saveErrorAlert($saveErrorMessage)
+        .saveErrorNotice($saveErrorMessage)
         // MARK: - Completion Confirmation
 
         .alert(

@@ -74,14 +74,14 @@ final class PersistentStoreLoader {
         do {
             // Do not let SwiftData create an empty store over a recoverable missing DB.
             if let backup, backup.backupDate != nil, !backup.storeExists {
-                errorMessage = "Your database file is missing, but a recovery backup is available. Restore the backup to recover your saved universe."
+                errorMessage = "Your saved universe could not be found, but a recovery backup is available. Restore it to continue."
                 return
             }
             container = try makeContainer()
         } catch {
             Logger(subsystem: "PersonalUniverse", category: "Storage")
                 .error("Unable to open store: \(String(describing: error), privacy: .private)")
-            errorMessage = "Your saved data has not been deleted. Try again. If this continues, restart the app and check available device storage."
+            errorMessage = "Your saved data has been kept. Try again, or check available device storage."
         }
     }
 }

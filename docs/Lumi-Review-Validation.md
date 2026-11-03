@@ -18,7 +18,7 @@ The app launched successfully in an isolated iPhone 17 Pro / iOS 26.5 simulator.
 
 ## Manual checks before release
 
-- Open current-challenge settings and settings from My Universe; save/cancel title/style edits and reopen them after an app restart.
+- From My Universe, open a challenge detail and choose Edit; save/cancel title/style edits and reopen after an app restart. Home intentionally has no editing action.
 - Confirm the active widget and reminder title update after a successful edit; real notifications and widget delivery require device verification.
 - Complete a normal day and final day from both routes; check one completion event, matching model state, and the midnight day-selection rule.
 - Simulate save failure in the UI and confirm draft remains, no success event appears, and retry works.

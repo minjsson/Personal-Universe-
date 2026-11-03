@@ -25,8 +25,12 @@ struct AmbientSpaceEvent {
             .filter { $0 != previous }
         let kind = requestedKind ?? candidates.randomElement(using: &generator) ?? .meteor
         let leftToRight = Bool.random(using: &generator)
-        let startY = CGFloat.random(in: 0.12...0.78, using: &generator)
-        let endY = min(max(startY + CGFloat.random(in: -0.24...0.24, using: &generator), 0.08), 0.85)
+        let lanes: [ClosedRange<CGFloat>] = [0.06...0.24, 0.28...0.49, 0.53...0.75, 0.80...0.94]
+        let lane = lanes.randomElement(using: &generator) ?? lanes[1]
+        let startY = CGFloat.random(in: lane, using: &generator)
+        let endY = min(max(startY + CGFloat.random(in: -0.08...0.08, using: &generator), lane.lowerBound), lane.upperBound)
+        let upwardRoom = min(0.08, max(min(startY, endY) - lane.lowerBound, 0))
+        let downwardRoom = min(0.08, max(lane.upperBound - max(startY, endY), 0))
 
         return Self(
             kind: kind,
@@ -34,7 +38,7 @@ struct AmbientSpaceEvent {
             duration: Double.random(in: kind == .meteor ? 0.9...1.8 : (kind == .satellite ? 10...17 : 18...26), using: &generator),
             start: CGPoint(x: leftToRight ? -0.25 : 1.25, y: startY),
             end: CGPoint(x: leftToRight ? 1.25 : -0.25, y: endY),
-            arc: kind == .meteor ? 0 : CGFloat.random(in: -0.16...0.16, using: &generator),
+            arc: kind == .meteor ? 0 : CGFloat.random(in: -upwardRoom...downwardRoom, using: &generator),
             size: CGFloat.random(in: kind == .meteor ? 38...80 : (kind == .satellite ? 14...19 : 38...48), using: &generator),
             brightness: Double.random(in: kind == .meteor ? 0.40...0.65 : 0.24...0.42, using: &generator),
             tilt: Double.random(in: -35...35, using: &generator)

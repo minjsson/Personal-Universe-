@@ -60,8 +60,9 @@ final class AmbientSpaceScene {
             let kinds = AmbientSpaceEvent.Kind.allCases.filter {
                 !arguments.contains("--ambient-station-only") || $0 == .station
             }
-            for kind in kinds {
-                try await Task.sleep(for: .seconds(2))
+            for (index, kind) in kinds.enumerated() {
+                // Let the first frame settle before a sub-two-second meteor pass.
+                try await Task.sleep(for: .seconds(index == 0 ? 5 : 2))
                 try Task.checkCancellation()
                 let next = AmbientSpaceEvent.random(kind: kind, after: nil, using: &generator)
                 event = next

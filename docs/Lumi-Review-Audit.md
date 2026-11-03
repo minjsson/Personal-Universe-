@@ -12,7 +12,7 @@ This audit distinguishes changes made from review points intentionally retained 
 | Suggested `let revealAt = 0` | This is not equivalent to the repository's generator requirements; it would fix the constant and lose the adjustable initialization argument. | Intentionally not applied. |
 | GalaxyBodyView initializer | `_orbitAngle = State(initialValue: galaxyBody.startingAngle)` performs meaningful initialization. | Intentionally retained. |
 | GalaxyOrbitModifier | Confirmed there were no callers, then removed the unused type/file and target entry. | Implemented. |
-| Shared symbol names | App/widget sparkle and repeated settings/navigation symbols use `UniverseSymbols`. The symbol String itself still needs availability/visual verification. | Implemented for actual repeated sparkle uses. |
+| Shared symbol names | App/widget sparkle and repeated navigation symbols use `UniverseSymbols`. The symbol String itself still needs availability/visual verification. | Implemented for actual repeated sparkle uses. |
 | Font/opacity constants | Unrelated numerical values were not globally merged. Event appearance values remain local to their rendering owner. | Selective application; not a full design-token audit. |
 | HapticManager Singleton | Existing shared UIKit utility remains. It is not mutable screen state and no concrete replacement requirement was established. | Not converted. Environment is a delivery choice, not a universal requirement. |
 | Initializer / static study | Day 7 note explains static values, shared references, private init, and meaningful custom initialization. | Documented. |
@@ -29,7 +29,7 @@ These checks are not a substitute for real-device notification/widget delivery, 
 
 ## Motion-recording method
 
-The Debug build supports `--ambient-demo`, which shows meteor, satellite and station in a fixed order with two-second waits. It uses the actual event renderer, random geometry and actual movement-duration ranges. This demonstration is not evidence of the production waiting-time distribution.
+The Debug build supports `--ambient-demo`, which shows meteor, satellite and station in a fixed order with a five-second initial wait and two-second later waits (the original captures used two-second waits throughout). It uses the actual event renderer, random geometry and actual movement-duration ranges. This demonstration is not evidence of the production waiting-time distribution.
 
 A separate launch with `--ambient-timing-log` uses the normal unaccelerated random scheduler and logs chosen waits and event start/duration values. Neither recording flag is included in Release builds.
 
@@ -55,3 +55,7 @@ Database backup/restore, notification/widget recovery and rendering changes are 
 ## Final re-audit
 
 [Final review in Korean](Lumi-Final-Review.md) maps the original pasted review item by item. It also records additional fixes found during reinspection: missing-primary-store backup protection, obsolete/overlapping notification requests, completion animation task ownership, remaining trivial initializers and Preview force-try removal. These are code and targeted regression findings; they are not a universal release guarantee.
+
+## Visual follow-up
+
+[Visual cohesion](Visual-Cohesion.md) documents detail-only editing, matching recovery/settings styling, whole-scene event lanes, and the initially empty visibility-layer bug found through actual recording and corrected with a stable layout node. Generator tests alone did not establish visibility.

@@ -12,7 +12,11 @@ struct SpaceBackground: View {
     @Environment(\.scenePhase) private var scenePhase
 
     @State private var isVisible = false
-    private var animateBackground: Bool { isVisible && !reduceMotion && scenePhase == .active }
+    private let isAnimated: Bool
+
+    init(isAnimated: Bool = true) { self.isAnimated = isAnimated }
+
+    private var animateBackground: Bool { isAnimated && isVisible && !reduceMotion && scenePhase == .active }
 
     // 무작위 별의 위치는 View 갱신 중에도 유지합니다.
     @State private var stars: [BackgroundStar] = {

@@ -108,6 +108,7 @@ struct ContentView: View {
                         }
                         .buttonStyle(.plain)
                     }
+                    .sharedBackgroundVisibility(.hidden)
                 }
             }
             // MARK: Navigation Destinations
@@ -123,7 +124,7 @@ struct ContentView: View {
                 }
             }
         }
-        .saveErrorAlert($saveErrorMessage)
+        .saveErrorNotice($saveErrorMessage)
         // MARK: Lifecycle
 
         .onAppear {

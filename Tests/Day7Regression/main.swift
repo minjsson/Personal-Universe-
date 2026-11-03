@@ -75,10 +75,20 @@ func runChecks() throws {
     var rightToLeft = false
     var shortGap = false
     var longGap = false
+    var lowPass = false
+    var highPass = false
     for _ in 0..<512 {
         let event = AmbientSpaceEvent.random(after: previous, using: &generator)
         precondition(event.kind != previous)
-        precondition((0.08...0.85).contains(event.end.y))
+        precondition((0.04...0.96).contains(event.end.y))
+        let middleY = (event.start.y + event.end.y) / 2 + event.arc
+        lowPass = lowPass || middleY >= 0.80
+        highPass = highPass || middleY <= 0.24
+        for step in 0...20 {
+            let t = CGFloat(step) / 20
+            let y = event.start.y + (event.end.y - event.start.y) * t + sin(t * .pi) * event.arc
+            precondition((0.039...0.961).contains(y))
+        }
         precondition(event.start.x != event.end.x)
         leftToRight = leftToRight || event.start.x < event.end.x
         rightToLeft = rightToLeft || event.start.x > event.end.x
@@ -101,7 +111,7 @@ func runChecks() throws {
         previous = event.kind
     }
     precondition(seenKinds.count == 3 && seenSpeeds.count > 10)
-    precondition(leftToRight && rightToLeft && shortGap && longGap)
+    precondition(leftToRight && rightToLeft && shortGap && longGap && lowPass && highPass)
     print("PASS: storage/edit regressions, revealAt, ambient variety/bounds/no immediate repeats")
 }
 

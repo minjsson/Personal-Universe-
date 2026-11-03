@@ -23,16 +23,20 @@ private struct AmbientSpaceEventLayer: View {
     @State private var isVisible = false
 
     var body: some View {
-        Group {
-            if isVisible, !reduceMotion, scenePhase == .active, let event = scene?.event {
-                TimelineView(.animation(minimumInterval: 1.0 / 30)) { timeline in
-                    AmbientSpaceEventView(event: event, date: timeline.date)
+        // Keep a real layout node while no event exists; an empty Group cannot
+        // reliably receive onAppear to enable its own conditional child.
+        Color.clear
+            .overlay {
+                if isVisible, !reduceMotion, scenePhase == .active, let event = scene?.event {
+                    TimelineView(.animation(minimumInterval: 1.0 / 30)) { timeline in
+                        AmbientSpaceEventView(event: event, date: timeline.date)
+                    }
                 }
             }
-        }
-        .onAppear { isVisible = true }
-        .onDisappear { isVisible = false }
+            .onAppear { isVisible = true }
+            .onDisappear { isVisible = false }
     }
+
 }
 
 #Preview {

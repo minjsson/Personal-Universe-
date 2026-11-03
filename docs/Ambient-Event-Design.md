@@ -39,3 +39,7 @@ The first two are grouped in `SpaceSceneBackground`, placed at zIndex -1 relativ
 ## Satellite versus station silhouettes
 
 The satellite now has a compact body, two panel wings and a small dish antenna (14–19 points wide). The station uses a long truss, four vertical panel pairs and connected modules (38–48 points wide). Their existing different motion speeds remain. Both retain the same restrained white-line material and background layering. The revised actual Views were rendered side by side and inspected; the app/widget build passed.
+
+## Whole-scene placement follow-up
+
+The 2026-11-03 [visual cohesion review](Visual-Cohesion.md) adds deliberate upper/middle/lower lanes, including 80–94% scene-height passes, and constrains the full arc to its lane. The same report documents detail-only editing and the matching recovery/settings treatment.
