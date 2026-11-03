@@ -23,21 +23,4 @@ struct GalaxyBody {
     
     let revealAt: Double
     
-    init(
-        x: CGFloat,
-        y: CGFloat,
-        size: CGFloat,
-        type: GalaxyBodyType,
-        duration: Double,
-        startingAngle: Double,
-        revealAt: Double = 0
-    ) {
-        self.x = x
-        self.y = y
-        self.size = size
-        self.type = type
-        self.duration = duration
-        self.startingAngle = startingAngle
-        self.revealAt = revealAt
-    }
 }

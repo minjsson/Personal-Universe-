@@ -12,6 +12,10 @@ struct CompletionEventView: View {
     let onMyUniverse: () -> Void
     let onNewChallenge: () -> Void
 
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private var shouldAnimate: Bool { scenePhase == .active && !reduceMotion }
+
     // MARK: - Animation State
 
     @State private var atmosphereAppeared = false
@@ -124,8 +128,24 @@ struct CompletionEventView: View {
 
         // MARK: - Start
 
-        .onAppear {
-            startCompletionAnimation()
+        .task(id: shouldAnimate) {
+            guard shouldAnimate else {
+                settleWithoutMotion()
+                return
+            }
+            if !animationFinished {
+                startCompletionAnimation()
+                do { try await Task.sleep(for: .seconds(3.4)) }
+                catch { return }
+                guard !Task.isCancelled else { return }
+                animationFinished = true
+            }
+            withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) {
+                breathing = true
+            }
+        }
+        .onDisappear {
+            withTransaction(Transaction(animation: nil)) { breathing = false }
         }
     }
 
@@ -262,21 +282,19 @@ struct CompletionEventView: View {
         // Stillness.
         // -------------------------------------------------
 
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(3.4))
+        // The View's task owns the delayed phase and is cancelled on disappearance.
+    }
 
-            guard !Task.isCancelled else {
-                return
-            }
-
+    private func settleWithoutMotion() {
+        withTransaction(Transaction(animation: nil)) {
+            atmosphereAppeared = true
+            galaxyAppeared = true
+            burst = true
+            burstGlow = true
+            galaxySettled = true
+            completionLight = true
+            breathing = false
             animationFinished = true
-
-            withAnimation(
-                .easeInOut(duration: 3.2)
-                    .repeatForever(autoreverses: true)
-            ) {
-                breathing = true
-            }
         }
     }
 
@@ -332,7 +350,7 @@ struct CompletionEventView: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
+                Image(systemName: UniverseSymbols.forward)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.white)
             }

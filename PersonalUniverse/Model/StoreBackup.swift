@@ -16,6 +16,8 @@ nonisolated struct StoreBackup: Sendable {
         }
     }
 
+    var storeExists: Bool { FileManager.default.fileExists(atPath: storeURL.path) }
+
     var backupDate: Date? {
         (try? FileManager.default.attributesOfItem(atPath: backupURL.path)[.modificationDate]) as? Date
     }

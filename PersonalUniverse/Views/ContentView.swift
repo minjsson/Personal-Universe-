@@ -190,7 +190,7 @@ struct ContentView: View {
                         for: .seconds(2.5)
                     )
 
-                    guard activeEvent == .growth else {
+                    guard !Task.isCancelled, activeEvent == .growth else {
                         return
                     }
 

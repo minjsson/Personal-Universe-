@@ -9,6 +9,10 @@ struct GrowthEventView: View {
     let style: GalaxyStyle
     let progress: Double
 
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private var shouldAnimate: Bool { scenePhase == .active && !reduceMotion }
+
     @State private var appeared = false
     @State private var pulse = false
 
@@ -63,7 +67,11 @@ struct GrowthEventView: View {
         }
         .frame(width: 340, height: 340)
         .allowsHitTesting(false)
-        .onAppear {
+        .task(id: shouldAnimate) {
+            guard shouldAnimate else {
+                withTransaction(Transaction(animation: nil)) { appeared = true; pulse = true }
+                return
+            }
             withAnimation(.easeOut(duration: 0.8)) {
                 appeared = true
             }

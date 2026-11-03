@@ -8,11 +8,11 @@ This audit distinguishes changes made from review points intentionally retained 
 |---|---|---|
 | Startup fatalError | `PersistentStoreLoader` reports failure; `DatabaseRootView` offers retry. The original store is neither deleted nor silently replaced with temporary storage. | Implemented; now includes verified-backup restore with original-file preservation. This is not arbitrary corrupt-data salvage. |
 | Overall error handling | Main creation, completion, positioning and metadata-saving paths surface failures and stop success-only effects. Reflection input stays in a draft. | Implemented for reviewed paths: notification permission/scheduling and widget failures now surface recovery state and retry. |
-| GalaxyPoint initializer | Removed redundant assignments. Kept `let revealAt: Double` because all callers supply it, including nonzero reveal thresholds. The synthesized initializer preserves those calls. | Implemented with behavior preserved. |
+| Value-struct initializers | Removed redundant assignments from GalaxyPoint, GalaxyStar and GalaxyBody. Kept `let revealAt: Double` because all callers supply it, including nonzero reveal thresholds. The synthesized initializer preserves those calls. | Implemented with behavior preserved. |
 | Suggested `let revealAt = 0` | This is not equivalent to the repository's generator requirements; it would fix the constant and lose the adjustable initialization argument. | Intentionally not applied. |
 | GalaxyBodyView initializer | `_orbitAngle = State(initialValue: galaxyBody.startingAngle)` performs meaningful initialization. | Intentionally retained. |
 | GalaxyOrbitModifier | Confirmed there were no callers, then removed the unused type/file and target entry. | Implemented. |
-| Shared symbol names | App/widget sparkle references use `UniverseSymbols.sparkle`. The symbol String itself still needs availability/visual verification. | Implemented for actual repeated sparkle uses. |
+| Shared symbol names | App/widget sparkle and repeated settings/navigation symbols use `UniverseSymbols`. The symbol String itself still needs availability/visual verification. | Implemented for actual repeated sparkle uses. |
 | Font/opacity constants | Unrelated numerical values were not globally merged. Event appearance values remain local to their rendering owner. | Selective application; not a full design-token audit. |
 | HapticManager Singleton | Existing shared UIKit utility remains. It is not mutable screen state and no concrete replacement requirement was established. | Not converted. Environment is a delivery choice, not a universal requirement. |
 | Initializer / static study | Day 7 note explains static values, shared references, private init, and meaningful custom initialization. | Documented. |
@@ -51,3 +51,7 @@ Debug and Release app/widget builds passed. The recording selectors/log strings 
 ## 2026-11-03 recovery follow-up
 
 Database backup/restore, notification/widget recovery and rendering changes are implemented and detailed in [Recovery and view optimization](Recovery-and-View-Optimization.md). The standalone regressions now include real temporary SQLite/WAL files, SwiftData backup reopening, corrupt widget data and injected notification failures. An isolated simulator corruption/restore flow was also checked. This supersedes the former deferred status of those implementation items; device delivery and release verification remain distinct.
+
+## Final re-audit
+
+[Final review in Korean](Lumi-Final-Review.md) maps the original pasted review item by item. It also records additional fixes found during reinspection: missing-primary-store backup protection, obsolete/overlapping notification requests, completion animation task ownership, remaining trivial initializers and Preview force-try removal. These are code and targeted regression findings; they are not a universal release guarantee.

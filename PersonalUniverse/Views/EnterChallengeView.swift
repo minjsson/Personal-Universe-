@@ -117,7 +117,7 @@ struct EnterChallengeView: View {
             Button {
                 previousStep()
             } label: {
-                Image(systemName: "chevron.left")
+                Image(systemName: UniverseSymbols.back)
                     .font(
                         .system(
                             size: 17,
@@ -180,7 +180,7 @@ struct EnterChallengeView: View {
                     ProgressView()
                         .tint(.white)
                 } else {
-                    Image(systemName: "chevron.right")
+                    Image(systemName: UniverseSymbols.forward)
                         .font(
                             .system(
                                 size: 17,

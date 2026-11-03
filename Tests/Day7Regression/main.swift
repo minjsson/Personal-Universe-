@@ -119,6 +119,7 @@ struct EventTestGenerator: RandomNumberGenerator {
 func check(_ value: Bool) { precondition(value) }
 
 // Use real temporary SQLite/WAL files, never the user's app database.
+@MainActor
 func runBackupChecks() throws {
     let files = FileManager.default
     let directory = files.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -142,6 +143,16 @@ func runBackupChecks() throws {
     precondition(leftovers.count == 1 && leftovers[0].lastPathComponent == "last-good.store")
     sqlite3_close(database)
     database = nil
+    // Missing primary + existing backup must not silently create a new empty universe.
+    try files.moveItem(at: url, to: directory.appendingPathComponent("retained-primary.store"))
+    var openAttempts = 0
+    let missingLoader = PersistentStoreLoader(backup: backup) {
+        openAttempts += 1
+        throw ForcedFailure.storage
+    }
+    missingLoader.open()
+    precondition(openAttempts == 0 && missingLoader.container == nil && missingLoader.errorMessage != nil)
+    _ = try backup.restore()
     try Data("broken original".utf8).write(to: url)
     let wal = URL(fileURLWithPath: url.path + "-wal")
     let shm = URL(fileURLWithPath: url.path + "-shm")
@@ -238,7 +249,8 @@ func runNotificationChecks() async throws {
             return true
         },
         add: { _ in added += 1; if failAdd { throw ForcedFailure.storage } },
-        remove: { removed += $0.count }
+        remove: { removed += $0.count },
+        now: { Calendar.current.startOfDay(for: .now) }
     )
     let manager = NotificationManager(client: client)
     check(!(await manager.requestPermission()))
@@ -251,18 +263,100 @@ func runNotificationChecks() async throws {
     check(await manager.requestPermission())
     precondition(manager.errorMessage == nil)
     let challenge = UniverseChallenge(title: "Reminder", length: .seven, reminderEnabled: true, reminderHour: 23, reminderMinute: 59)
-    // Current day is a real model, future reminder within today (except the last minute).
-    if Calendar.current.component(.hour, from: .now) != 23 || Calendar.current.component(.minute, from: .now) < 59 {
-        await manager.scheduleCurrentReminder(for: challenge)
-        precondition(added == 1 && removed == 0 && manager.errorMessage != nil)
-        failAdd = false
-        await manager.retry()
-        precondition(added == 2 && manager.errorMessage == nil)
-    }
+    await manager.scheduleCurrentReminder(for: challenge)
+    precondition(added == 1 && removed == 0 && manager.errorMessage != nil)
+    failAdd = false
+    await manager.retry()
+    precondition(added == 2 && manager.errorMessage == nil)
     challenge.reminderEnabled = false
     await manager.scheduleCurrentReminder(for: challenge)
     precondition(removed == challenge.days.count && manager.errorMessage == nil)
     print("PASS: permission denial/error recovery, schedule failure/retry without deleting prior reminder, disabled cancellation")
+}
+
+@MainActor
+func runNotificationRaceChecks() async {
+    for fail in [false, true] {
+        var continuation: CheckedContinuation<Void, Never>?
+        var removed = 0
+        let manager = NotificationManager(client: NotificationClient(
+            authorizationStatus: { .authorized }, requestAuthorization: { true },
+            add: { _ in
+                await withCheckedContinuation { continuation = $0 }
+                if fail { throw ForcedFailure.storage }
+            },
+            remove: { removed += $0.count },
+            now: { Calendar.current.startOfDay(for: .now) }
+        ))
+        let challenge = UniverseChallenge(title: "Pending reminder", length: .seven, reminderEnabled: true, reminderHour: 23, reminderMinute: 59)
+        let work = Task { await manager.scheduleCurrentReminder(for: challenge) }
+        for _ in 0..<10000 {
+            if continuation != nil { break }
+            await Task.yield()
+        }
+        precondition(continuation != nil)
+        challenge.completeDay(challenge.currentDay!)
+        continuation?.resume()
+        await work.value
+        precondition(manager.errorMessage == nil && removed == 7)
+    }
+
+    // Denial arrives after completion: the obsolete permission error must not remain.
+    var permissionContinuation: CheckedContinuation<Void, Never>?
+    let permissionManager = NotificationManager(client: NotificationClient(
+        authorizationStatus: {
+            await withCheckedContinuation { permissionContinuation = $0 }
+            return .denied
+        }, requestAuthorization: { false }, add: { _ in preconditionFailure("Completed day must not schedule") }, remove: { _ in }
+    ))
+    let completed = UniverseChallenge(title: "Completed during permission", length: .seven, reminderEnabled: true)
+    let permissionWork = Task { await permissionManager.scheduleCurrentReminder(for: completed) }
+    for _ in 0..<10000 {
+        if permissionContinuation != nil { break }
+        await Task.yield()
+    }
+    precondition(permissionContinuation != nil)
+    completed.completeDay(completed.currentDay!)
+    permissionContinuation?.resume()
+    await permissionWork.value
+    precondition(permissionManager.errorMessage == nil && !permissionManager.permissionDenied)
+
+    // Hold the first platform write while a newer title is queued.
+    var firstWrite: CheckedContinuation<Void, Never>?
+    var titles: [String] = []
+    var overlappingWrites = 0
+    var activeWrites = 0
+    let manager = NotificationManager(client: NotificationClient(
+        authorizationStatus: { .authorized }, requestAuthorization: { true },
+        add: { request in
+            activeWrites += 1
+            overlappingWrites = max(overlappingWrites, activeWrites)
+            titles.append(request.content.title)
+            if titles.count == 1 { await withCheckedContinuation { firstWrite = $0 } }
+            activeWrites -= 1
+        }, remove: { _ in }, now: { Calendar.current.startOfDay(for: .now) }
+    ))
+    let challenge = UniverseChallenge(title: "Old title", length: .seven, reminderEnabled: true, reminderHour: 23, reminderMinute: 59)
+    let first = Task { await manager.scheduleCurrentReminder(for: challenge) }
+    for _ in 0..<10000 {
+        if firstWrite != nil { break }
+        await Task.yield()
+    }
+    precondition(firstWrite != nil)
+    challenge.title = "Newest title"
+    var queued = false
+    let second = Task { queued = true; await manager.scheduleCurrentReminder(for: challenge) }
+    for _ in 0..<10000 {
+        if queued { break }
+        await Task.yield()
+    }
+    precondition(queued)
+    firstWrite?.resume()
+    await first.value
+    await second.value
+    precondition(titles == ["Old title", "Newest title"] && overlappingWrites == 1)
+    precondition(manager.errorMessage == nil)
+    print("PASS: notification completion during pending add/permission, serialized latest-title scheduling")
 }
 
 @main
@@ -274,5 +368,6 @@ struct RegressionChecks {
         try runSwiftDataRecoveryChecks()
         try runWidgetChecks()
         try await runNotificationChecks()
+        await runNotificationRaceChecks()
     }
 }

@@ -71,7 +71,7 @@ struct ChallengeJourneyView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showSettings = true } label: {
-                    Image(systemName: "slider.horizontal.3")
+                    Image(systemName: UniverseSymbols.challengeSettings)
                 }
                 .accessibilityLabel("Challenge settings")
             }
@@ -141,7 +141,7 @@ struct ChallengeJourneyView: View {
             }
             .task {
                 try? await Task.sleep(for: .seconds(2.5))
-                guard activeEvent == .growth else {
+                guard !Task.isCancelled, activeEvent == .growth else {
                     return
                 }
                 await MainActor.run {
@@ -380,25 +380,18 @@ extension Notification.Name {
 // MARK: - Preview
 
 #Preview("Challenge Journey") {
-    let container = try! ModelContainer(
-        for: UniverseChallenge.self,
-        ChallengeDay.self,
+    if let container = try? ModelContainer(
+        for: UniverseChallenge.self, ChallengeDay.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    )
-
-    let context = ModelContext(container)
-
-    let challenge = UniverseChallenge(
-        title: "Draw every day",
-        length: .thirty,
-        startDate: .now,
-        galaxy: .expanding
-    )
-
-    context.insert(challenge)
-
-    return NavigationStack {
-        ChallengeJourneyView(challenge: challenge)
+    ) {
+        let context = container.mainContext
+        let challenge = UniverseChallenge(
+            title: "Draw every day", length: .thirty, startDate: .now, galaxy: .expanding
+        )
+        let _ = context.insert(challenge)
+        NavigationStack { ChallengeJourneyView(challenge: challenge) }
+            .modelContainer(container)
+    } else {
+        ContentUnavailableView("Preview storage unavailable", systemImage: "externaldrive.badge.exclamationmark")
     }
-    .modelContainer(container)
 }

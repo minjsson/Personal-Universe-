@@ -72,6 +72,11 @@ final class PersistentStoreLoader {
         errorMessage = nil
         defer { isLoading = false }
         do {
+            // Do not let SwiftData create an empty store over a recoverable missing DB.
+            if let backup, backup.backupDate != nil, !backup.storeExists {
+                errorMessage = "Your database file is missing, but a recovery backup is available. Restore the backup to recover your saved universe."
+                return
+            }
             container = try makeContainer()
         } catch {
             Logger(subsystem: "PersonalUniverse", category: "Storage")

@@ -389,3 +389,7 @@ These are changes on a separate review branch, not merged or released behavior. 
 - Show recoverable errors and avoid success effects after failure.
 - Decide architecture early enough to guide work, then refine it with evidence.
 - Keep domain rules authoritative and editing drafts intentional.
+
+## Final review follow-up — 2026-11-03
+
+The [final Lumi audit](Lumi-Final-Review.md) records further fixes found during reinspection. GalaxyStar and GalaxyBody now also use synthesized memberwise initializers while retaining configurable reveal thresholds. GalaxyBodyView's state-seeding initializer remains. The audit also covers missing-store backup protection, notification request ordering and obsolete errors, and View-owned animation task cancellation. Read its verification limits alongside the implementation status.

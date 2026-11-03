@@ -84,7 +84,7 @@ struct CurrentChallengeView: View {
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button { showSettings = true } label: {
-                    Image(systemName: "slider.horizontal.3")
+                    Image(systemName: UniverseSymbols.challengeSettings)
                 }
                 .accessibilityLabel("Challenge settings")
             }

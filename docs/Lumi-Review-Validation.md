@@ -41,3 +41,7 @@ The three effects were recorded in the isolated simulator, with a separate appro
 ## 2026-11-03 follow-up
 
 See [Recovery and view optimization](Recovery-and-View-Optimization.md) for the new real-file backup/restore, widget and notification regressions, isolated simulator restoration evidence, and rendering changes. These checks extend the initial in-memory validation described above. No PR or merge.
+
+## Final re-audit
+
+See [Final review](Lumi-Final-Review.md). The regression runner additionally checks missing-primary-store protection and notification completion/permission races with serialized writes. The old notification code fails the new regression; the corrected code passes. Growth/completion lifecycle changes and initializer cleanup are included in final app/widget builds.
