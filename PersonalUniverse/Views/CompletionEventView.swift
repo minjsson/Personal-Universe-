@@ -34,19 +34,40 @@ struct CompletionEventView: View {
     // MARK: - Body
 
     var body: some View {
-        ZStack {
-            completionArtwork
-                .frame(maxWidth: 340, maxHeight: 340)
-                .aspectRatio(1, contentMode: .fit)
-                .clipped()
-                .allowsHitTesting(false)
-
+        GeometryReader { geometry in
             if showActions {
-                completionActions
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                ScrollView {
+                    if geometry.size.width > geometry.size.height {
+                        HStack(spacing: 24) {
+                            artwork.frame(maxWidth: 280)
+                            VStack(spacing: 24) {
+                                completionMessage
+                                completionChoices
+                            }
+                            .frame(maxWidth: 320)
+                        }
+                        .padding(24)
+                        .frame(maxWidth: .infinity, minHeight: geometry.size.height)
+                    } else {
+                        VStack(spacing: 24) {
+                            completionMessage
+                            Spacer(minLength: 0)
+                            artwork.frame(maxWidth: 340)
+                            Spacer(minLength: 0)
+                            completionChoices
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 32)
+                        .frame(maxWidth: .infinity, minHeight: geometry.size.height)
+                    }
+                }
+                .scrollBounceBehavior(.basedOnSize)
+            } else {
+                artwork
+                    .frame(maxWidth: 340, maxHeight: 340)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
         .contentShape(Rectangle())
         .onTapGesture {
             guard animationFinished, !showActions else { return }
@@ -292,39 +313,31 @@ struct CompletionEventView: View {
 
     // MARK: - Actions
 
-    private var completionActions: some View {
-        VStack {
-            // MARK: Message
+    private var artwork: some View {
+        UniverseArtwork { completionArtwork }
+            .clipped()
+            .allowsHitTesting(false)
+    }
 
-            VStack(spacing: 8) {
-                Text("Your universe is complete.")
-                    .font(.system(size: 21, weight: .regular))
-                    .foregroundStyle(.white)
-
-                Text("What comes next?")
-                    .font(.system(size: 15))
-                    .foregroundStyle(.white.opacity(0.65))
-            }
-            .padding(.top, 72)
-
-            Spacer()
-
-            // MARK: Choices
-
-            VStack(spacing: 12) {
-                completionAction(
-                    title: "My Universe",
-                    action: onMyUniverse
-                )
-
-                completionAction(
-                    title: "New Challenge",
-                    action: onNewChallenge
-                )
-            }
-            .frame(maxWidth: 280)
-            .padding(.bottom, 42)
+    private var completionMessage: some View {
+        VStack(spacing: 8) {
+            Text("Your universe is complete.")
+                .font(.title3)
+                .foregroundStyle(.white)
+            Text("What comes next?")
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.65))
         }
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var completionChoices: some View {
+        VStack(spacing: 12) {
+            completionAction(title: "My Universe", action: onMyUniverse)
+            completionAction(title: "New Challenge", action: onNewChallenge)
+        }
+        .frame(maxWidth: 280)
     }
 
     // MARK: - Action

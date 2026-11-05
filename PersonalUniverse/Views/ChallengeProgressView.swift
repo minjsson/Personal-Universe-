@@ -62,7 +62,7 @@ struct ChallengeProgressView: View {
                     Text(symbol(for: day))
                         .font(.system(size: isCurrent(day) ? 23 : 17))
                         .foregroundStyle(color(for: day))
-                        .frame(width: 38, height: 38)
+                        .frame(maxWidth: .infinity, minHeight: 44)
                         .scaleEffect(isCurrent(day) ? 1.15 : 1)
                         .shadow(
                             color: isCurrent(day) ? .white.opacity(0.8) : .clear,

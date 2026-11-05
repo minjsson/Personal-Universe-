@@ -33,34 +33,38 @@ struct CurrentChallengeView: View {
     // MARK: - Body
 
     var body: some View {
-        ZStack {
-            VStack(spacing: 32) {
-                Spacer()
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 32) {
+                    Spacer()
 
-                // MARK: Challenge Title
+                    // MARK: Challenge Title
 
-                Text(challenge.title)
-                    .font(.system(size: 28, weight: .medium))
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.center)
+                    Text(challenge.title)
+                        .font(.title.weight(.medium))
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 24)
+
+                    // MARK: Current Week
+
+                    ChallengeProgressView(
+                        challenge: challenge,
+                        showCurrentWeekOnly: true
+                    ) { day in
+                        handleDayTapped(day)
+                    }
                     .padding(.horizontal, 24)
 
-                // MARK: Current Week
+                    Spacer()
 
-                ChallengeProgressView(
-                    challenge: challenge,
-                    showCurrentWeekOnly: true
-                ) { day in
-                    handleDayTapped(day)
+                    Color.clear
+                        .frame(height: 24)
                 }
-                .padding(.horizontal, 24)
-
-                Spacer()
-
-                Color.clear
-                    .frame(height: 24)
+                .frame(maxWidth: 560)
+                .frame(maxWidth: .infinity, minHeight: geometry.size.height)
             }
-            .frame(maxWidth: .infinity)
+            .scrollBounceBehavior(.basedOnSize)
         }
         // MARK: Initial / Return Refresh
 
@@ -83,7 +87,7 @@ struct CurrentChallengeView: View {
         .saveErrorNotice($saveErrorMessage)
         .sheet(item: $selectedDay) { day in
             dayReflectionView(for: day)
-                .presentationDetents([.fraction(0.40)])
+                .presentationDetents([.height(420), .large])
                 .presentationDragIndicator(.visible)
                 .presentationBackground(.black)
         }

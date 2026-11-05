@@ -10,7 +10,8 @@ struct ChallengeSettingsView: View {
     @State private var errorMessage: String?
     @State private var confirmDiscard = false
     @FocusState private var editingTitle: Bool
-    @State private var contentHeight: CGFloat = 330
+    @ScaledMetric(relativeTo: .footnote) private var styleMinimumWidth: CGFloat = 84
+    @State private var contentHeight: CGFloat = 280
     @State private var headerHeight: CGFloat = 64
 
     init(challenge: UniverseChallenge) {
@@ -32,11 +33,6 @@ struct ChallengeSettingsView: View {
                         Spacer(minLength: 24)
                         saveButton
                     }
-                    Text("Edit challenge")
-                        .font(.title2.weight(.medium))
-                        .foregroundStyle(.white)
-                        .accessibilityAddTraits(.isHeader)
-                        .fixedSize(horizontal: false, vertical: true)
                     if let errorMessage {
                         UniverseNotice(title: "Unable to save", message: errorMessage, compact: true) {
                             Button("Try again", action: save)
@@ -48,19 +44,19 @@ struct ChallengeSettingsView: View {
                 .foregroundStyle(.white.opacity(0.9))
                 .padding(.horizontal, 24)
                 .padding(.top, 12)
-                .padding(.bottom, 20)
+                .padding(.bottom, 12)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { headerHeight = $0 }
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
                         VStack(alignment: .leading, spacing: 10) {
-                            sectionLabel("Challenge name")
-                            TextField("Challenge name", text: $draftTitle, axis: .vertical)
+                            sectionLabel("Name")
+                            TextField("Challenge name", text: $draftTitle)
                                 .font(.body.weight(.medium))
                                 .foregroundStyle(.white)
                                 .tint(.white.opacity(0.7))
                                 .multilineTextAlignment(.leading)
-                                .lineLimit(1...3)
+                                .lineLimit(1)
                                 .focused($editingTitle)
                                 .submitLabel(.done)
                                 .onSubmit { editingTitle = false }
@@ -74,24 +70,18 @@ struct ChallengeSettingsView: View {
                         }
 
                         VStack(alignment: .leading, spacing: 12) {
-                            sectionLabel("Universe appearance")
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 92), spacing: 10)], spacing: 10) {
+                            sectionLabel("Galaxy style")
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: styleMinimumWidth), spacing: 10)], spacing: 10) {
                                 ForEach(GalaxyStyle.allCases, id: \.self) { style in
                                     styleChoice(style)
                                 }
                             }
                         }
 
-                        VStack(alignment: .leading, spacing: 5) {
-                            Text("Only the name and appearance change.")
-                                .font(.subheadline.weight(.medium))
-                                .foregroundStyle(.white.opacity(0.85))
-                            Text("Your dates, progress and reflections are preserved.")
-                                .font(.subheadline)
-                                .foregroundStyle(.white.opacity(0.7))
-                        }
-                        .lineSpacing(3)
-                        .fixedSize(horizontal: false, vertical: true)
+                        Text("Dates, progress and reflections stay the same.")
+                            .font(.footnote)
+                            .foregroundStyle(.white.opacity(0.6))
+                            .fixedSize(horizontal: false, vertical: true)
 
                     }
                     .frame(maxWidth: 430)
@@ -110,7 +100,7 @@ struct ChallengeSettingsView: View {
             Button("Discard changes", role: .destructive) { dismiss() }
             Button("Keep editing", role: .cancel) {}
         }
-        .presentationDetents([.height(max(340, headerHeight + contentHeight + 20)), .large])
+        .presentationDetents([.height(max(300, headerHeight + contentHeight + 12)), .large])
         .presentationBackground(.black)
         .presentationDragIndicator(.visible)
         .preferredColorScheme(.dark)
@@ -154,21 +144,15 @@ struct ChallengeSettingsView: View {
                 Text(style.name)
                     .font(.footnote)
                     .foregroundStyle(.white.opacity(selected ? 0.9 : 0.55))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 4)
                     .padding(.bottom, 12)
             }
             .frame(maxWidth: .infinity)
             .padding(.top, 8)
-            .background(.white.opacity(selected ? 0.05 : 0.015), in: RoundedRectangle(cornerRadius: 16))
+            .background(.white.opacity(selected ? 0.075 : 0.015), in: RoundedRectangle(cornerRadius: 16))
             .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(selected ? 0.55 : 0.13), lineWidth: selected ? 1 : 0.7) }
-            .overlay(alignment: .topTrailing) {
-                if selected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(.black, .white.opacity(0.9))
-                        .padding(8)
-                        .accessibilityHidden(true)
-                }
-            }
+
         }
         .buttonStyle(.plain)
         .accessibilityLabel(style.name)

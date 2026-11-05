@@ -48,96 +48,101 @@ struct ReflectionView: View {
             Color.black
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // MARK: - Top
+            ScrollView {
+                VStack(spacing: 0) {
+                    // MARK: - Top
 
-                Spacer()
-                    .frame(height: topPadding)
-
-                // MARK: - Prompt
-
-                Text("What did you discover today?")
-                    .font(
-                        .system(
-                            size: 20,
-                            weight: .medium
-                        )
-                    )
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-                    .padding(.bottom, 20)
-
-                // MARK: - Reflection Box
-
-                TextEditor(text: $draftReflection)
-                    .tint(.white.opacity(0.65))
-                    .scrollContentBackground(.hidden)
-                    .foregroundStyle(.white)
-                    .font(
-                        .system(
-                            size: 17,
-                            weight: .regular
-                        )
-                    )
-                    .padding(12)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: contentHeight)
-                    .background(
-                        RoundedRectangle(
-                            cornerRadius: contentCornerRadius
-                        )
-                        .fill(.white.opacity(0.08))
-                    )
-                    .overlay(
-                        RoundedRectangle(
-                            cornerRadius: contentCornerRadius
-                        )
-                        .stroke(
-                            .white.opacity(0.15),
-                            lineWidth: 1
-                        )
-                    )
-                    .onChange(
-                        of: draftReflection
-                    ) {
-                        limitReflection()
-                    }
-
-                // MARK: - Character Count
-
-                HStack {
                     Spacer()
+                        .frame(height: topPadding)
 
-                    Text("\(draftReflection.count) / \(characterLimit)")
-                        .font(.system(size: 13))
-                        .foregroundStyle(
-                            draftReflection.count >= characterLimit
-                            ? .white
-                            : .white.opacity(0.5)
+                    // MARK: - Prompt
+
+                    Text("What did you discover today?")
+                        .font(
+                            .system(
+                                size: 20,
+                                weight: .medium
+                            )
                         )
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                        .padding(.bottom, 20)
+
+                    // MARK: - Reflection Box
+
+                    TextEditor(text: $draftReflection)
+                        .tint(.white.opacity(0.65))
+                        .scrollContentBackground(.hidden)
+                        .foregroundStyle(.white)
+                        .font(
+                            .system(
+                                size: 17,
+                                weight: .regular
+                            )
+                        )
+                        .padding(12)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: contentHeight)
+                        .background(
+                            RoundedRectangle(
+                                cornerRadius: contentCornerRadius
+                            )
+                            .fill(.white.opacity(0.08))
+                        )
+                        .overlay(
+                            RoundedRectangle(
+                                cornerRadius: contentCornerRadius
+                            )
+                            .stroke(
+                                .white.opacity(0.15),
+                                lineWidth: 1
+                            )
+                        )
+                        .onChange(
+                            of: draftReflection
+                        ) {
+                            limitReflection()
+                        }
+
+                    // MARK: - Character Count
+
+                    HStack {
+                        Spacer()
+
+                        Text("\(draftReflection.count) / \(characterLimit)")
+                            .font(.system(size: 13))
+                            .foregroundStyle(
+                                draftReflection.count >= characterLimit
+                                ? .white
+                                : .white.opacity(0.5)
+                            )
+                    }
+                    .frame(height: 20)
+                    .padding(.top, 6)
+
+                    // MARK: - Space Before Complete
+
+                    Spacer()
+                        .frame(height: 16)
+
+                    // MARK: - Complete
+
+                    Button {
+                        showCompletionConfirmation = true
+                    } label: {
+                        sparkleView
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isCompleting)
+                    .accessibilityLabel("Complete reflection")
+                    .padding(.bottom, bottomPadding)
                 }
-                .frame(height: 20)
-                .padding(.top, 6)
-
-                // MARK: - Space Before Complete
-
-                Spacer()
-                    .frame(height: 16)
-
-                // MARK: - Complete
-
-                Button {
-                    showCompletionConfirmation = true
-                } label: {
-                    sparkleView
-                }
-                .buttonStyle(.plain)
-                .disabled(isCompleting)
-                .accessibilityLabel("Complete reflection")
-                .padding(.bottom, bottomPadding)
+                .frame(maxWidth: 560)
+                .padding(.horizontal, horizontalPadding)
+                .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, horizontalPadding)
+            .scrollDismissesKeyboard(.interactively)
         }
 
         .interactiveDismissDisabled(!draftReflection.isEmpty || isCompleting)

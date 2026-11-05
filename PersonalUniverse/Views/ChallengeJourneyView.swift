@@ -86,7 +86,7 @@ struct ChallengeJourneyView: View {
         .saveErrorNotice($saveErrorMessage)
         .sheet(item: $selectedDay) { day in
             dayReflectionView(for: day)
-                .presentationDetents([.fraction(0.40)])
+                .presentationDetents([.height(420), .large])
                 .presentationDragIndicator(.visible)
                 .presentationBackground(.black)
         }
@@ -107,7 +107,8 @@ struct ChallengeJourneyView: View {
                     isAnimated: true,
                     revealProgress: challenge.progress
                 )
-                .frame(width: 340, height: 340)
+                .frame(maxWidth: 340)
+                .frame(maxWidth: .infinity)
 
                 // MARK: Challenge Progress
 

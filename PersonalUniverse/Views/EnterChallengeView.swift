@@ -82,24 +82,28 @@ struct EnterChallengeView: View {
             VStack(spacing: 0) {
                 topNavigation
 
-                Group {
-                    switch step {
-                    case 0:
-                        titleStep
-                    case 1:
-                        durationStep
-                    case 2:
-                        reminderStep
-                    case 3:
-                        galaxyStep
-                    default:
-                        EmptyView()
+                GeometryReader { geometry in
+                    ScrollView {
+                        Group {
+                            switch step {
+                            case 0:
+                                titleStep
+                            case 1:
+                                durationStep
+                            case 2:
+                                reminderStep
+                            case 3:
+                                galaxyStep
+                            default:
+                                EmptyView()
+                            }
+                        }
+                        .frame(maxWidth: 560)
+                        .frame(maxWidth: .infinity, minHeight: max(geometry.size.height, 480))
                     }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .scrollDismissesKeyboard(.interactively)
                 }
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: .infinity
-                )
 
                 bottomNavigation
             }

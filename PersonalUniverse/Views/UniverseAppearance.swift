@@ -56,3 +56,20 @@ struct UniverseNotice<Actions: View>: View {
         .accessibilityElement(children: .contain)
     }
 }
+
+// Scale a fixed-coordinate drawing to the available space without clipping its edges.
+struct UniverseArtwork<Content: View>: View {
+    var designSize: CGFloat = 340
+    @ViewBuilder var content: () -> Content
+
+    var body: some View {
+        GeometryReader { geometry in
+            let side = max(0, min(geometry.size.width, geometry.size.height, designSize))
+            content()
+                .frame(width: designSize, height: designSize)
+                .scaleEffect(side / designSize)
+                .frame(width: geometry.size.width, height: geometry.size.height)
+        }
+        .aspectRatio(1, contentMode: .fit)
+    }
+}

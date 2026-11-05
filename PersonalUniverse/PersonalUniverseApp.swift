@@ -8,6 +8,8 @@ struct PersonalUniverseApp: App {
             #if DEBUG
             if ProcessInfo.processInfo.arguments.contains("--lighting-review") {
                 UniverseLightingReview()
+            } else if ProcessInfo.processInfo.arguments.contains("--layout-review") {
+                UniverseLayoutReview()
             } else {
                 DatabaseRootView()
             }

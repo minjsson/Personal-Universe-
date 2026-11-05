@@ -102,11 +102,14 @@ struct ContentView: View {
                         } label: {
                             Text("My Universe")
                                 .font(.subheadline)
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
                                 .foregroundStyle(
                                     .white.opacity(0.7)
                                 )
                         }
                         .buttonStyle(.plain)
+                        .fixedSize(horizontal: true, vertical: false)
                     }
                     .sharedBackgroundVisibility(.hidden)
                 }
