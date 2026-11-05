@@ -26,6 +26,7 @@ struct ChallengeSettingsView: View {
     var body: some View {
         ZStack {
             UniverseQuietBackground()
+                .overlay { Color.black.opacity(0.3).ignoresSafeArea() }
             VStack(spacing: 0) {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack {
@@ -49,27 +50,18 @@ struct ChallengeSettingsView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: 24) {
-                        VStack(alignment: .leading, spacing: 10) {
+                        VStack(spacing: 8) {
                             sectionLabel("Name")
                             TextField("Challenge name", text: $draftTitle)
-                                .font(.body.weight(.medium))
-                                .foregroundStyle(.white)
-                                .tint(.white.opacity(0.7))
-                                .multilineTextAlignment(.leading)
                                 .lineLimit(1)
                                 .focused($editingTitle)
                                 .submitLabel(.done)
                                 .onSubmit { editingTitle = false }
-                                .padding(.vertical, 14)
-                                .overlay(alignment: .bottom) {
-                                    Rectangle()
-                                        .fill(.white.opacity(editingTitle ? 0.5 : 0.2))
-                                        .frame(height: 1)
-                                }
+                                .modifier(UniverseNameFieldStyle(isFocused: editingTitle))
                                 .accessibilityLabel("Challenge name")
                         }
 
-                        VStack(alignment: .leading, spacing: 12) {
+                        VStack(spacing: 12) {
                             sectionLabel("Galaxy style")
                             LazyVGrid(columns: [GridItem(.adaptive(minimum: styleMinimumWidth), spacing: 10)], spacing: 10) {
                                 ForEach(GalaxyStyle.allCases, id: \.self) { style in
@@ -80,7 +72,9 @@ struct ChallengeSettingsView: View {
 
                         Text("Dates, progress and reflections stay the same.")
                             .font(.footnote)
-                            .foregroundStyle(.white.opacity(0.6))
+                            .foregroundStyle(.white.opacity(0.55))
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: .infinity)
                             .fixedSize(horizontal: false, vertical: true)
 
                     }
@@ -118,7 +112,7 @@ struct ChallengeSettingsView: View {
 
     private var saveButton: some View {
         Button("Save", action: save)
-            .font(.subheadline.weight(.semibold))
+            .font(.subheadline.weight(.medium))
             .foregroundStyle(.white.opacity(cleanTitle.isEmpty || !hasChanges ? 0.3 : 0.95))
             .frame(minHeight: 44)
             .buttonStyle(.plain)
@@ -127,8 +121,8 @@ struct ChallengeSettingsView: View {
 
     private func sectionLabel(_ title: String) -> some View {
         Text(title)
-            .font(.subheadline.weight(.medium))
-            .foregroundStyle(.white.opacity(0.7))
+            .font(.footnote)
+            .foregroundStyle(.white.opacity(0.55))
     }
 
     private func styleChoice(_ style: GalaxyStyle) -> some View {
@@ -150,8 +144,8 @@ struct ChallengeSettingsView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.top, 8)
-            .background(.white.opacity(selected ? 0.075 : 0.015), in: RoundedRectangle(cornerRadius: 16))
-            .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(selected ? 0.55 : 0.13), lineWidth: selected ? 1 : 0.7) }
+            .background(.white.opacity(selected ? 0.025 : 0), in: RoundedRectangle(cornerRadius: 16))
+            .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(.white.opacity(selected ? 0.45 : 0.08), lineWidth: selected ? 1 : 0.7) }
 
         }
         .buttonStyle(.plain)

@@ -1,5 +1,24 @@
 import SwiftUI
 
+// The same quiet name-entry treatment is used when creating and editing a challenge.
+struct UniverseNameFieldStyle: ViewModifier {
+    var isFocused = false
+
+    func body(content: Content) -> some View {
+        content
+            .font(.title3)
+            .foregroundStyle(.white)
+            .multilineTextAlignment(.center)
+            .tint(.white)
+            .padding(.vertical, 14)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(.white.opacity(isFocused ? 0.4 : 0.2))
+                    .frame(height: 1)
+            }
+    }
+}
+
 // Shared treatment for quiet actions and recovery messages, not unrelated layout numbers.
 struct UniverseButtonStyle: ButtonStyle {
     var prominent = false

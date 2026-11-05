@@ -245,23 +245,13 @@ struct EnterChallengeView: View {
                 "",
                 text: $title
             )
-            .font(.system(size: 20))
-            .foregroundStyle(.white)
-            .multilineTextAlignment(.center)
-            .tint(.white)
-            .padding(.vertical, 14)
-            .overlay(
-                Rectangle()
-                    .fill(.white.opacity(0.2))
-                    .frame(height: 1),
-                alignment: .bottom
-            )
+            .modifier(UniverseNameFieldStyle())
             .padding(.horizontal, 50)
             .placeholder(
                 when: title.isEmpty
             ) {
                 Text("Enter here")
-                    .font(.system(size: 20))
+                    .font(.title3)
                     .foregroundStyle(.white.opacity(0.25))
             }
 
