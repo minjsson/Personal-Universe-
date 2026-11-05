@@ -41,8 +41,13 @@ struct UniverseLayoutReview: View {
                 let schema = Schema([UniverseChallenge.self, ChallengeDay.self])
                 let memory = try ModelContainer(for: schema, configurations: [ModelConfiguration(isStoredInMemoryOnly: true)])
                 let title = arguments.contains("--layout-long-title") ? "Learn Swift one small step at a time" : "Swift"
-                let item = UniverseChallenge(title: title, length: .thirty, startDate: .now,
+                let finalDay = arguments.contains("--layout-final-day")
+                let start = finalDay ? Calendar.current.date(byAdding: .day, value: -6, to: .now) ?? .now : .now
+                let item = UniverseChallenge(title: title, length: finalDay ? .seven : .thirty, startDate: start,
                                              galaxy: .spiral, reminderEnabled: false)
+                if finalDay {
+                    for day in item.orderedDays.prefix(6) { item.completeDay(day) }
+                }
                 memory.mainContext.insert(item)
                 try memory.mainContext.save()
                 challenge = item

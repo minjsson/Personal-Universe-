@@ -127,6 +127,24 @@ struct ContentView: View {
                 }
             }
         }
+        .onOpenURL { url in
+            guard url.scheme == "personaluniverse" else { return }
+            switch url.host {
+            case "my-universe":
+                navigationPath = NavigationPath([Route.myUniverse])
+            case "create-challenge":
+                // A stale empty widget must not replace a challenge that is active now.
+                navigationPath = NavigationPath([currentChallenge == nil ? Route.newChallenge : Route.myUniverse])
+            default:
+                break
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openNewChallenge)) { _ in
+            activeEvent = .none
+            eventChallenge = nil
+            showCompletionActions = false
+            navigationPath = NavigationPath([Route.newChallenge])
+        }
         .saveErrorNotice($saveErrorMessage)
         // MARK: Lifecycle
 

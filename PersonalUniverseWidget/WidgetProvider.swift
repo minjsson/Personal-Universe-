@@ -26,7 +26,7 @@ struct WidgetProvider: TimelineProvider {
         completion(
             WidgetUniverseEntry(
                 date: .now,
-                universe: universe
+                universe: universe.projected(at: .now)
             )
         )
     }
@@ -41,7 +41,7 @@ struct WidgetProvider: TimelineProvider {
 
         let entry = WidgetUniverseEntry(
             date: .now,
-            universe: universe
+            universe: universe.projected(at: .now)
         )
 
         let refreshDate = Calendar.current.date(
@@ -50,8 +50,14 @@ struct WidgetProvider: TimelineProvider {
             to: .now
         ) ?? .now.addingTimeInterval(900)
 
+        // Supply midnight explicitly; a refresh request is not an exact delivery time.
+        let calendar = Calendar.autoupdatingCurrent
+        var entries = [entry]
+        if let midnight = calendar.date(byAdding: .day, value: 1, to: calendar.startOfDay(for: entry.date)) {
+            entries.append(WidgetUniverseEntry(date: midnight, universe: universe.projected(at: midnight, calendar: calendar)))
+        }
         let timeline = Timeline(
-            entries: [entry],
+            entries: entries,
             policy: .after(refreshDate)
         )
 

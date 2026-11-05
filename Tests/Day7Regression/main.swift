@@ -320,9 +320,10 @@ func runNotificationRaceChecks() async {
         authorizationStatus: {
             await withCheckedContinuation { permissionContinuation = $0 }
             return .denied
-        }, requestAuthorization: { false }, add: { _ in preconditionFailure("Completed day must not schedule") }, remove: { _ in }
+        }, requestAuthorization: { false }, add: { _ in preconditionFailure("Completed day must not schedule") }, remove: { _ in },
+        now: { Calendar.current.startOfDay(for: .now) }
     ))
-    let completed = UniverseChallenge(title: "Completed during permission", length: .seven, reminderEnabled: true)
+    let completed = UniverseChallenge(title: "Completed during permission", length: .seven, reminderEnabled: true, reminderHour: 23, reminderMinute: 59)
     let permissionWork = Task { await permissionManager.scheduleCurrentReminder(for: completed) }
     for _ in 0..<10000 {
         if permissionContinuation != nil { break }
@@ -372,6 +373,55 @@ func runNotificationRaceChecks() async {
     print("PASS: notification completion during pending add/permission, serialized latest-title scheduling")
 }
 
+@MainActor
+func runDailyRolloverChecks() async throws {
+    let calendar = Calendar.autoupdatingCurrent
+    let start = calendar.startOfDay(for: .now)
+    var now = calendar.date(byAdding: .hour, value: 12, to: start)!
+    var requests: [UNNotificationRequest] = []
+    let manager = NotificationManager(client: NotificationClient(
+        authorizationStatus: { .authorized }, requestAuthorization: { true },
+        add: { requests.append($0) }, remove: { _ in }, now: { now }
+    ))
+    let challenge = UniverseChallenge(title: "Daily rollover", length: .seven, startDate: start,
+                                     reminderEnabled: true, reminderHour: 13, reminderMinute: 0)
+    await manager.scheduleCurrentReminder(for: challenge)
+    precondition(requests.last?.content.body == "Day 1 is waiting for you.")
+    challenge.completeDay(challenge.orderedDays[0], at: now)
+    await manager.rescheduleAfterCompletion(for: challenge, completedDayNumber: 1)
+    precondition(requests.last?.content.body == "Day 2 is waiting for you.")
+    let tomorrow = calendar.date(byAdding: .day, value: 1, to: start)!
+    let trigger = requests.last?.trigger as? UNCalendarNotificationTrigger
+    precondition(trigger?.dateComponents.day == calendar.component(.day, from: tomorrow))
+    precondition(challenge.currentDay?.dayNumber == 1) // Reminder planning must not advance the UI day.
+    challenge.title = "Edited daily rollover"
+    await manager.scheduleCurrentReminder(for: challenge)
+    precondition(requests.last?.content.title == challenge.title)
+    now = calendar.date(byAdding: .hour, value: 14, to: start)!
+    let late = UniverseChallenge(title: "After reminder time", length: .seven, startDate: start,
+                                reminderEnabled: true, reminderHour: 13, reminderMinute: 0)
+    await manager.scheduleCurrentReminder(for: late)
+    precondition(requests.last?.content.body == "Day 2 is waiting for you.")
+    for day in challenge.orderedDays { challenge.completeDay(day, at: now) }
+    let count = requests.count
+    await manager.rescheduleAfterCompletion(for: challenge, completedDayNumber: 7)
+    precondition(requests.count == count && challenge.status == .completed)
+
+    let snapshot = WidgetUniverseData(hasActiveChallenge: true, title: "Widget rollover",
+        galaxyRawValue: "spiral", totalDays: 7, progress: 1.0 / 7,
+        currentDayNumber: 1, startDate: start,
+        days: (1...7).map { WidgetDayData(dayNumber: $0, state: $0 == 1 ? .completed : .upcoming) })
+    let projected = snapshot.projected(at: tomorrow, calendar: calendar)
+    precondition(projected.currentDayNumber == 2 && projected.days[0].state == .completed)
+    precondition(projected.progress == snapshot.progress && snapshot.currentDayNumber == 1)
+    let dayFour = calendar.date(byAdding: .day, value: 3, to: start)!
+    let missed = snapshot.projected(at: dayFour, calendar: calendar)
+    precondition(missed.currentDayNumber == 4 && missed.days[1].state == .missed && missed.days[2].state == .missed)
+    let afterEnd = calendar.date(byAdding: .day, value: 7, to: start)!
+    precondition(!snapshot.projected(at: afterEnd, calendar: calendar).hasActiveChallenge)
+    print("PASS: next-day reminder after completion/past time, edited title, final cancellation, widget midnight projection")
+}
+
 @main
 struct RegressionChecks {
     @MainActor
@@ -382,5 +432,6 @@ struct RegressionChecks {
         try runWidgetChecks()
         try await runNotificationChecks()
         await runNotificationRaceChecks()
+        try await runDailyRolloverChecks()
     }
 }

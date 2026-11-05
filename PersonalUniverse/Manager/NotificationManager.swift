@@ -66,12 +66,12 @@ final class NotificationManager {
                 let granted = try await client.requestAuthorization()
                 permissionDenied = !granted
                 if granted { errorMessage = nil }
-                else { report("Reminders are off in Settings. Your challenge is saved; enable notifications in Settings to receive reminders.") }
+                else { report("Reminders are off in Settings. Enable notifications there to receive reminders.") }
                 return granted
 
             case .denied:
                 permissionDenied = true
-                report("Reminders are off in Settings. Your challenge is saved; enable notifications in Settings to receive reminders.")
+                report("Reminders are off in Settings. Enable notifications there to receive reminders.")
                 return false
 
             @unknown default:
@@ -79,7 +79,7 @@ final class NotificationManager {
                 return false
             }
         } catch {
-            report("Notification permission could not be checked. Your challenge is saved. Try again.")
+            report("Notification permission could not be checked. Try again.")
             return false
         }
     }
@@ -115,21 +115,13 @@ final class NotificationManager {
             return
         }
 
-        // Find the current day.
-        guard let currentDay = challenge.currentDay else {
-            cancelAllReminders(for: challenge)
-            print("No current challenge day remains.")
+        guard (0...23).contains(challenge.reminderHour), (0...59).contains(challenge.reminderMinute) else {
+            report("The reminder time is invalid. Please check the challenge reminder settings.")
             return
         }
-
-        // A reminder is only valid for an upcoming day.
-        guard currentDay.status == .upcoming else {
-            errorMessage = nil
-            print("Current challenge day is not upcoming.")
-            cancelReminder(
-                for: challenge,
-                dayNumber: currentDay.dayNumber
-            )
+        // Today's completion must not leave tomorrow without a reminder.
+        guard let currentDay = nextReminderDay(for: challenge) else {
+            cancelAllReminders(for: challenge)
             return
         }
 
@@ -160,10 +152,6 @@ final class NotificationManager {
             return
         }
 
-        guard (0...23).contains(challenge.reminderHour), (0...59).contains(challenge.reminderMinute) else {
-            report("The reminder time is invalid. Please check the challenge reminder settings.")
-            return
-        }
         var components = calendar.dateComponents(
             [.year, .month, .day],
             from: challengeDate
@@ -238,7 +226,21 @@ final class NotificationManager {
 
     private func isReminderCurrent(for challenge: UniverseChallenge, day: ChallengeDay) -> Bool {
         challenge.status == .active && challenge.reminderEnabled && day.status == .upcoming &&
-        challenge.currentDay?.dayNumber == day.dayNumber
+        nextReminderDay(for: challenge)?.dayNumber == day.dayNumber
+    }
+
+    private func nextReminderDay(for challenge: UniverseChallenge) -> ChallengeDay? {
+        let calendar = Calendar.autoupdatingCurrent
+        let now = client.now()
+        let today = calendar.startOfDay(for: now)
+        return challenge.orderedDays.first { day in
+            guard day.status == .upcoming,
+                  let date = challenge.date(for: day, calendar: calendar), date >= today,
+                  let reminder = calendar.date(bySettingHour: challenge.reminderHour,
+                                               minute: challenge.reminderMinute, second: 0, of: date)
+            else { return false }
+            return reminder > now
+        }
     }
 
     // MARK: - Reschedule After Completion
@@ -271,27 +273,6 @@ final class NotificationManager {
             return
         }
 
-        // There must be another current day.
-        guard let nextDay = challenge.currentDay else {
-            cancelAllReminders(for: challenge)
-            print(
-                "No next day remains. " +
-                "No further reminder scheduled."
-            )
-            return
-        }
-
-        // The next day must actually be upcoming.
-        guard nextDay.status == .upcoming else {
-            cancelAllReminders(for: challenge)
-            print(
-                "No upcoming day available. " +
-                "No further reminder scheduled."
-            )
-            return
-        }
-
-        // Schedule ONLY the next current day.
         await scheduleCurrentReminder(for: challenge)
     }
 
