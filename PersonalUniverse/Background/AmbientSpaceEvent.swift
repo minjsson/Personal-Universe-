@@ -27,8 +27,17 @@ struct AmbientSpaceEvent {
         let leftToRight = Bool.random(using: &generator)
         let lanes: [ClosedRange<CGFloat>] = [0.06...0.24, 0.28...0.49, 0.53...0.75, 0.80...0.94]
         let lane = lanes.randomElement(using: &generator) ?? lanes[1]
-        let startY = CGFloat.random(in: lane, using: &generator)
-        let endY = min(max(startY + CGFloat.random(in: -0.08...0.08, using: &generator), lane.lowerBound), lane.upperBound)
+        let startY: CGFloat
+        let endY: CGFloat
+        if kind == .meteor {
+            // 양쪽 방향에서 내려오는 유성은 수평 통과보다 분명한 대각선을 그립니다.
+            let drop = CGFloat.random(in: 0.30...0.48, using: &generator)
+            startY = CGFloat.random(in: 0.06...(0.94 - drop), using: &generator)
+            endY = startY + drop
+        } else {
+            startY = CGFloat.random(in: lane, using: &generator)
+            endY = min(max(startY + CGFloat.random(in: -0.08...0.08, using: &generator), lane.lowerBound), lane.upperBound)
+        }
         let upwardRoom = min(0.08, max(min(startY, endY) - lane.lowerBound, 0))
         let downwardRoom = min(0.08, max(lane.upperBound - max(startY, endY), 0))
 

@@ -77,6 +77,8 @@ func runChecks() throws {
     var longGap = false
     var lowPass = false
     var highPass = false
+    var meteorFromLeft = false
+    var meteorFromRight = false
     for _ in 0..<512 {
         let event = AmbientSpaceEvent.random(after: previous, using: &generator)
         precondition(event.kind != previous)
@@ -94,6 +96,9 @@ func runChecks() throws {
         rightToLeft = rightToLeft || event.start.x > event.end.x
         switch event.kind {
         case .meteor:
+            precondition((0.299...0.481).contains(event.end.y - event.start.y))
+            meteorFromLeft = meteorFromLeft || event.start.x < event.end.x
+            meteorFromRight = meteorFromRight || event.start.x > event.end.x
             precondition((0.75...0.90).contains(event.brightness) && (55...90).contains(event.size))
             seenKinds.insert(0)
             precondition((1.3...2.1).contains(event.duration) && event.arc == 0)
@@ -115,6 +120,7 @@ func runChecks() throws {
     }
     precondition(seenKinds.count == 3 && seenSpeeds.count > 10)
     precondition(leftToRight && rightToLeft && shortGap && longGap && lowPass && highPass)
+    precondition(meteorFromLeft && meteorFromRight)
     print("PASS: storage/edit regressions, revealAt, ambient variety/bounds/no immediate repeats")
 }
 
