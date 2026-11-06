@@ -11,26 +11,18 @@ struct ReflectionView: View {
     @Binding var reflection: String
     let onComplete: () -> Bool
 
-    @State private var draftReflection: String
     @State private var saveErrorMessage: String?
-    @State private var showDiscardConfirmation = false
-    @Environment(\.dismiss) private var dismiss
-
-    init(reflection: Binding<String>, onComplete: @escaping () -> Bool) {
-        _reflection = reflection
-        self.onComplete = onComplete
-        _draftReflection = State(initialValue: reflection.wrappedValue)
-    }
+    @State private var sheetContentHeight: CGFloat = 420
 
     private let characterLimit = 150
 
     // MARK: - Shared Layout
 
     private let horizontalPadding: CGFloat = 24
-    private let topPadding: CGFloat = 52
+    private let topPadding: CGFloat = 24
     private let contentHeight: CGFloat = 180
     private let contentCornerRadius: CGFloat = 16
-    private let bottomPadding: CGFloat = 18
+    private let bottomPadding: CGFloat = 12
 
     // MARK: - Animation State
 
@@ -71,7 +63,7 @@ struct ReflectionView: View {
 
                     // MARK: - Reflection Box
 
-                    TextEditor(text: $draftReflection)
+                    TextEditor(text: $reflection)
                         .tint(.white.opacity(0.65))
                         .scrollContentBackground(.hidden)
                         .foregroundStyle(.white)
@@ -100,7 +92,7 @@ struct ReflectionView: View {
                             )
                         )
                         .onChange(
-                            of: draftReflection
+                            of: reflection
                         ) {
                             limitReflection()
                         }
@@ -110,10 +102,10 @@ struct ReflectionView: View {
                     HStack {
                         Spacer()
 
-                        Text("\(draftReflection.count) / \(characterLimit)")
+                        Text("\(reflection.count) / \(characterLimit)")
                             .font(.system(size: 13))
                             .foregroundStyle(
-                                draftReflection.count >= characterLimit
+                                reflection.count >= characterLimit
                                 ? .white
                                 : .white.opacity(0.5)
                             )
@@ -140,25 +132,16 @@ struct ReflectionView: View {
                 }
                 .frame(maxWidth: 560)
                 .padding(.horizontal, horizontalPadding)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { sheetContentHeight = $0 }
                 .frame(maxWidth: .infinity)
             }
             .scrollDismissesKeyboard(.interactively)
         }
 
-        .interactiveDismissDisabled(!draftReflection.isEmpty || isCompleting)
-        .overlay(alignment: .topTrailing) {
-            Button("Close") {
-                if draftReflection.isEmpty { dismiss() }
-                else { showDiscardConfirmation = true }
-            }
-            .padding()
-            .foregroundStyle(.white)
-            .disabled(isCompleting)
-        }
-        .confirmationDialog("Discard unfinished reflection?", isPresented: $showDiscardConfirmation, titleVisibility: .visible) {
-            Button("Discard", role: .destructive) { dismiss() }
-            Button("Keep writing", role: .cancel) {}
-        }
+        .interactiveDismissDisabled(isCompleting)
+        .presentationDetents([.height(max(280, sheetContentHeight))])
+        .presentationDragIndicator(.visible)
+        .presentationBackground(.black)
         .saveErrorNotice($saveErrorMessage)
         // MARK: - Completion Confirmation
 
@@ -210,12 +193,12 @@ struct ReflectionView: View {
     // MARK: - Character Limit
 
     private func limitReflection() {
-        guard draftReflection.count > characterLimit else {
+        guard reflection.count > characterLimit else {
             return
         }
 
-        draftReflection = String(
-            draftReflection.prefix(characterLimit)
+        reflection = String(
+            reflection.prefix(characterLimit)
         )
     }
 
@@ -248,11 +231,10 @@ struct ReflectionView: View {
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 0.63
         ) {
-            let original = reflection
-            reflection = draftReflection
+            let unfinishedReflection = reflection
             if !onComplete() {
                 isCompleting = false
-                reflection = original
+                reflection = unfinishedReflection
                 saveErrorMessage = "Your reflection could not be saved. Your draft is still here. Please try again."
             }
         }

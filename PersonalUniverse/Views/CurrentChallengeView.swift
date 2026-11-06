@@ -87,7 +87,6 @@ struct CurrentChallengeView: View {
         .saveErrorNotice($saveErrorMessage)
         .sheet(item: $selectedDay) { day in
             dayReflectionView(for: day)
-                .presentationDetents([.height(420), .large])
                 .presentationDragIndicator(.visible)
                 .presentationBackground(.black)
         }
@@ -154,6 +153,7 @@ struct CurrentChallengeView: View {
             )
         } else {
             ReflectionDetailView(day: day)
+                .presentationDetents([.height(420), .large])
         }
     }
 
