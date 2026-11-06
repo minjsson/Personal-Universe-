@@ -125,7 +125,7 @@ struct MyUniverseView: View {
             }
         }
         .saveErrorNotice($saveErrorMessage)
-        .navigationTitle("My Universe")
+        .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
         .toolbar {

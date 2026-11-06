@@ -62,6 +62,7 @@ struct ChallengeJourneyView: View {
         }
         .navigationTitle(challenge.title)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
         // MARK: Lifecycle
         .onAppear {
             challenge.updateMissedDays()
@@ -69,6 +70,10 @@ struct ChallengeJourneyView: View {
         }
         // MARK: Reflection Sheet
         .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                UniverseBackButton { dismiss() }
+            }
+            .sharedBackgroundVisibility(.hidden)
             ToolbarItem(placement: .topBarTrailing) {
                 if activeEvent == .none {
                     Button("Edit") { showSettings = true }
