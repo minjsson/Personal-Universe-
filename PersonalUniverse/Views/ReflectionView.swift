@@ -22,7 +22,6 @@ struct ReflectionView: View {
     private let topPadding: CGFloat = 24
     private let contentHeight: CGFloat = 180
     private let contentCornerRadius: CGFloat = 16
-    private let bottomPadding: CGFloat = 12
 
     // MARK: - Animation State
 
@@ -128,7 +127,6 @@ struct ReflectionView: View {
                     .buttonStyle(.plain)
                     .disabled(isCompleting)
                     .accessibilityLabel("Complete reflection")
-                    .padding(.bottom, bottomPadding)
                 }
                 .frame(maxWidth: 560)
                 .padding(.horizontal, horizontalPadding)

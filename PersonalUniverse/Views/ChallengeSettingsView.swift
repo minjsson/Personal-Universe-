@@ -66,7 +66,6 @@ struct ChallengeSettingsView: View {
                 .frame(maxWidth: 430)
                 .padding(.horizontal, 24)
                 .padding(.top, 24)
-                .padding(.bottom, 12)
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
                 .frame(maxWidth: .infinity)
             }
