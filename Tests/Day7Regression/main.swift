@@ -103,10 +103,14 @@ func runChecks() throws {
             seenKinds.insert(0)
             precondition((1.3...2.1).contains(event.duration) && event.arc == 0)
         case .satellite:
+            precondition(abs(event.end.y - event.start.y) <= 0.061 && abs(event.arc) <= 0.0121)
+            precondition(abs(event.tilt) <= 18)
             precondition((0.55...0.70).contains(event.brightness) && (20...25).contains(event.size))
             seenKinds.insert(1)
             precondition((10...17).contains(event.duration))
         case .station:
+            precondition(abs(event.end.y - event.start.y) <= 0.031 && (0.0179...0.0351).contains(abs(event.arc)))
+            precondition(abs(event.tilt) <= 8)
             precondition((0.48...0.64).contains(event.brightness) && (44...56).contains(event.size))
             seenKinds.insert(2)
             precondition((18...26).contains(event.duration))

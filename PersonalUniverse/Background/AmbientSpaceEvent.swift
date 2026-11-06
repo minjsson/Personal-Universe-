@@ -29,17 +29,25 @@ struct AmbientSpaceEvent {
         let lane = lanes.randomElement(using: &generator) ?? lanes[1]
         let startY: CGFloat
         let endY: CGFloat
+        let arc: CGFloat
         if kind == .meteor {
             // 양쪽 방향에서 내려오는 유성은 수평 통과보다 분명한 대각선을 그립니다.
             let drop = CGFloat.random(in: 0.30...0.48, using: &generator)
             startY = CGFloat.random(in: 0.06...(0.94 - drop), using: &generator)
             endY = startY + drop
+            arc = 0
         } else {
-            startY = CGFloat.random(in: lane, using: &generator)
-            endY = min(max(startY + CGFloat.random(in: -0.08...0.08, using: &generator), lane.lowerBound), lane.upperBound)
+            // 곡선의 여유까지 확보해 위·아래쪽 통과도 화면 안에 유지합니다.
+            let maxArc: CGFloat = kind == .station ? 0.035 : 0.012
+            let safeLane = (lane.lowerBound + maxArc)...(lane.upperBound - maxArc)
+            let drift: CGFloat = kind == .station ? 0.03 : 0.06
+            startY = CGFloat.random(in: safeLane, using: &generator)
+            endY = min(max(startY + CGFloat.random(in: -drift...drift, using: &generator), safeLane.lowerBound), safeLane.upperBound)
+            let bend = kind == .station
+                ? CGFloat.random(in: 0.018...maxArc, using: &generator)
+                : CGFloat.random(in: 0...maxArc, using: &generator)
+            arc = Bool.random(using: &generator) ? bend : -bend
         }
-        let upwardRoom = min(0.08, max(min(startY, endY) - lane.lowerBound, 0))
-        let downwardRoom = min(0.08, max(lane.upperBound - max(startY, endY), 0))
 
         return Self(
             kind: kind,
@@ -47,10 +55,10 @@ struct AmbientSpaceEvent {
             duration: Double.random(in: kind == .meteor ? 1.3...2.1 : (kind == .satellite ? 10...17 : 18...26), using: &generator),
             start: CGPoint(x: leftToRight ? -0.25 : 1.25, y: startY),
             end: CGPoint(x: leftToRight ? 1.25 : -0.25, y: endY),
-            arc: kind == .meteor ? 0 : CGFloat.random(in: -upwardRoom...downwardRoom, using: &generator),
+            arc: arc,
             size: CGFloat.random(in: kind == .meteor ? 55...90 : (kind == .satellite ? 20...25 : 44...56), using: &generator),
             brightness: Double.random(in: kind == .meteor ? 0.75...0.90 : (kind == .satellite ? 0.55...0.70 : 0.48...0.64), using: &generator),
-            tilt: Double.random(in: -35...35, using: &generator)
+            tilt: kind == .meteor ? 0 : Double.random(in: kind == .station ? -8...8 : -18...18, using: &generator)
         )
     }
 
@@ -82,7 +90,7 @@ struct AmbientSpaceEventView: View {
                         .rotationEffect(.radians(atan2(dy, dx)))
                 } else {
                     spacecraft
-                        .rotationEffect(.degrees(event.tilt + sin(progress * .pi) * 10))
+                        .rotationEffect(.degrees(event.tilt + sin(progress * .pi) * (event.kind == .station ? 2 : 4)))
                 }
             }
             .opacity(fade * event.brightness)
