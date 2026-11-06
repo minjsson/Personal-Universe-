@@ -18,6 +18,9 @@ struct MyUniverseView: View {
     @Environment(\.modelContext)
     private var modelContext
 
+    @Environment(\.dismiss)
+    private var dismiss
+
     // MARK: - Navigation
 
     @State private var selectedChallenge: UniverseChallenge?
@@ -124,6 +127,13 @@ struct MyUniverseView: View {
         .saveErrorNotice($saveErrorMessage)
         .navigationTitle("My Universe")
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                UniverseBackButton { dismiss() }
+            }
+            .sharedBackgroundVisibility(.hidden)
+        }
 
         // MARK: Navigation
 

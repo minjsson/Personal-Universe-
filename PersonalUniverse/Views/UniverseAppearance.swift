@@ -1,5 +1,22 @@
 import SwiftUI
 
+// Navigation arrows share the setup screen's quiet appearance and full tap area.
+struct UniverseBackButton: View {
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: UniverseSymbols.back)
+                .font(.system(size: 17, weight: .medium))
+                .foregroundStyle(.white.opacity(0.8))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Back")
+    }
+}
+
 // The same quiet name-entry treatment is used when creating and editing a challenge.
 struct UniverseNameFieldStyle: ViewModifier {
     var isFocused = false

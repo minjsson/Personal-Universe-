@@ -118,23 +118,7 @@ struct EnterChallengeView: View {
 
     private var topNavigation: some View {
         HStack {
-            Button {
-                previousStep()
-            } label: {
-                Image(systemName: UniverseSymbols.back)
-                    .font(
-                        .system(
-                            size: 17,
-                            weight: .medium
-                        )
-                    )
-                    .foregroundStyle(.white.opacity(0.8))
-                    .frame(
-                        width: 44,
-                        height: 44
-                    )
-            }
-            .buttonStyle(.plain)
+            UniverseBackButton(action: previousStep)
 
             Spacer()
 
