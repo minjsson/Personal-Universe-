@@ -7,12 +7,17 @@
 
 import SwiftUI
 
+// One height for writing, saved reflections and empty day states on every screen.
+// This matches the writing layout; its ScrollView handles narrower layouts.
+enum ReflectionSheetLayout {
+    static let height: CGFloat = 334
+}
+
 struct ReflectionView: View {
     @Binding var reflection: String
     let onComplete: () -> Bool
 
     @State private var saveErrorMessage: String?
-    @State private var sheetContentHeight: CGFloat = 420
 
     private let characterLimit = 150
 
@@ -130,14 +135,13 @@ struct ReflectionView: View {
                 }
                 .frame(maxWidth: 560)
                 .padding(.horizontal, horizontalPadding)
-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { sheetContentHeight = $0 }
                 .frame(maxWidth: .infinity)
             }
             .scrollDismissesKeyboard(.interactively)
         }
 
         .interactiveDismissDisabled(isCompleting)
-        .presentationDetents([.height(max(280, sheetContentHeight))])
+        .presentationDetents([.height(ReflectionSheetLayout.height)])
         .presentationDragIndicator(.visible)
         .presentationBackground(.black)
         .saveErrorNotice($saveErrorMessage)

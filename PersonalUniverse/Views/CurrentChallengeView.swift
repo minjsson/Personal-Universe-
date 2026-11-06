@@ -153,7 +153,6 @@ struct CurrentChallengeView: View {
             )
         } else {
             ReflectionDetailView(day: day)
-                .presentationDetents([.height(420), .large])
         }
     }
 

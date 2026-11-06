@@ -45,6 +45,7 @@ struct ReflectionDetailView: View {
             }
             .padding(.horizontal, horizontalPadding)
         }
+        .presentationDetents([.height(ReflectionSheetLayout.height)])
     }
 
     // MARK: - Detail Content
