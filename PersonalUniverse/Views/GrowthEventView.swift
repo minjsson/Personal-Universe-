@@ -9,6 +9,10 @@ struct GrowthEventView: View {
     let style: GalaxyStyle
     let progress: Double
 
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private var shouldAnimate: Bool { scenePhase == .active && !reduceMotion }
+
     @State private var appeared = false
     @State private var pulse = false
 
@@ -17,58 +21,66 @@ struct GrowthEventView: View {
     }
 
     var body: some View {
-        ZStack {
-            // MARK: - Atmosphere
+        UniverseArtwork {
+            ZStack {
+                // MARK: - Atmosphere
 
-            Circle()
-                .fill(
-                    RadialGradient(
-                        colors: [
-                            .white.opacity(appeared ? 0.10 : 0),
-                            .white.opacity(0.015),
-                            .clear
-                        ],
-                        center: .center,
-                        startRadius: 0,
-                        endRadius: 160
+                Circle()
+                    .fill(
+                        RadialGradient(
+                            colors: [
+                                .white.opacity(appeared ? 0.30 : 0),
+                                .white.opacity(0.055),
+                                .clear
+                            ],
+                            center: .center,
+                            startRadius: 0,
+                            endRadius: 160
+                        )
                     )
+                    .frame(width: 320, height: 320)
+                    .blur(radius: 20)
+
+                // MARK: - Revealed Galaxy
+
+                GalaxyView(
+                    style: style,
+                    progress: clampedProgress,
+                    isCurrent: true,
+                    isAnimated: true,
+                    revealProgress: clampedProgress
                 )
-                .frame(width: 320, height: 320)
-                .blur(radius: 28)
+                .scaleEffect(appeared ? 1 : 0.75)
+                .opacity(appeared ? 1 : 0)
 
-            // MARK: - Revealed Galaxy
+                // MARK: - Growth Pulse
 
-            GalaxyView(
-                style: style,
-                progress: clampedProgress,
-                isCurrent: true,
-                isAnimated: true,
-                revealProgress: clampedProgress
-            )
-            .scaleEffect(appeared ? 1 : 0.75)
-            .opacity(appeared ? 1 : 0)
-
-            // MARK: - Growth Pulse
-
-            Circle()
-                .stroke(
-                    .white.opacity(pulse ? 0 : 0.25),
-                    lineWidth: 1
-                )
-                .frame(
-                    width: pulse ? 280 : 40,
-                    height: pulse ? 280 : 40
-                )
-                .opacity(pulse ? 0 : 1)
+                Circle()
+                    .stroke(
+                        .white.opacity(pulse ? 0 : 0.70),
+                        lineWidth: 1.4
+                    )
+                    .frame(
+                        width: pulse ? 280 : 40,
+                        height: pulse ? 280 : 40
+                    )
+                    .opacity(pulse ? 0 : 1)
+            }
         }
-        .frame(width: 340, height: 340)
+        .frame(maxWidth: 340, maxHeight: 340)
+        .clipped()
         .allowsHitTesting(false)
-        .onAppear {
+        .task(id: shouldAnimate) {
+            guard !reduceMotion else {
+                withTransaction(Transaction(animation: nil)) { appeared = true; pulse = true }
+                return
+            }
+            guard scenePhase == .active else { return }
             withAnimation(.easeOut(duration: 0.8)) {
                 appeared = true
             }
 
-            withAnimation(.easeOut(duration: 1.2).delay(0.15)) {
+            withAnimation(.easeOut(duration: 1.5).delay(0.15)) {
                 pulse = true
             }
         }
@@ -79,7 +91,7 @@ struct GrowthEventView: View {
 
 #Preview("Growth — 10% — Expanding") {
     ZStack {
-        SpaceBackground()
+        SpaceSceneBackground()
             .ignoresSafeArea()
 
         GrowthEventView(
@@ -91,7 +103,7 @@ struct GrowthEventView: View {
 
 #Preview("Growth — 35% — Expanding") {
     ZStack {
-        SpaceBackground()
+        SpaceSceneBackground()
             .ignoresSafeArea()
 
         GrowthEventView(
@@ -103,7 +115,7 @@ struct GrowthEventView: View {
 
 #Preview("Growth — 60% — Cluster") {
     ZStack {
-        SpaceBackground()
+        SpaceSceneBackground()
             .ignoresSafeArea()
 
         GrowthEventView(
@@ -115,7 +127,7 @@ struct GrowthEventView: View {
 
 #Preview("Growth — 80% — Spiral") {
     ZStack {
-        SpaceBackground()
+        SpaceSceneBackground()
             .ignoresSafeArea()
 
         GrowthEventView(

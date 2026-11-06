@@ -50,8 +50,8 @@
 			membershipExceptions = (
 				Galaxy/GalaxyBody.swift,
 				Galaxy/GalaxyBodyView.swift,
-				Galaxy/GalaxyComponents.swift,
 				Galaxy/GalaxyModels.swift,
+				Galaxy/UniverseSymbols.swift,
 				Galaxy/GalaxyStar.swift,
 				Galaxy/GalaxyStyle.swift,
 				Galaxy/GalaxyView.swift,
@@ -75,6 +75,7 @@
 				WidgetSizes/SmallWidgetView.swift,
 				WidgetSyncManager.swift,
 				WidgetUniverseData.swift,
+				WidgetSnapshotStore.swift,
 			);
 			target = 4CE990823025BC6C009E761B /* PersonalUniverse */;
 		};
@@ -491,6 +492,8 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				INFOPLIST_FILE = "Configuration/App-Info.plist";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
@@ -538,6 +541,8 @@
 				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
 				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UIUserInterfaceStyle = Dark;
+				INFOPLIST_FILE = "Configuration/App-Info.plist";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.5;

@@ -12,6 +12,10 @@ struct CompletionEventView: View {
     let onMyUniverse: () -> Void
     let onNewChallenge: () -> Void
 
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    private var shouldAnimate: Bool { scenePhase == .active && !reduceMotion }
+
     // MARK: - Animation State
 
     @State private var atmosphereAppeared = false
@@ -30,50 +34,92 @@ struct CompletionEventView: View {
     // MARK: - Body
 
     var body: some View {
+        GeometryReader { geometry in
+            if showActions {
+                ScrollView {
+                    if geometry.size.width > geometry.size.height {
+                        HStack(spacing: 24) {
+                            artwork.frame(maxWidth: 280)
+                            VStack(spacing: 24) {
+                                completionMessage
+                                completionChoices
+                            }
+                            .frame(maxWidth: 320)
+                        }
+                        .padding(24)
+                        .frame(maxWidth: .infinity, minHeight: geometry.size.height)
+                    } else {
+                        VStack(spacing: 24) {
+                            completionMessage
+                            Spacer(minLength: 0)
+                            artwork.frame(maxWidth: 340)
+                            Spacer(minLength: 0)
+                            completionChoices
+                        }
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 32)
+                        .frame(maxWidth: .infinity, minHeight: geometry.size.height)
+                    }
+                }
+                .scrollBounceBehavior(.basedOnSize)
+            } else {
+                artwork
+                    .frame(maxWidth: 340, maxHeight: 340)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            guard animationFinished, !showActions else { return }
+            onReveal()
+        }
+        .task(id: shouldAnimate) {
+            guard !reduceMotion else {
+                settleWithoutMotion()
+                return
+            }
+            guard scenePhase == .active else { return }
+            if !animationFinished {
+                startCompletionAnimation()
+                do { try await Task.sleep(for: .seconds(3.4)) }
+                catch { return }
+                guard !Task.isCancelled else { return }
+                animationFinished = true
+            }
+            withAnimation(.easeInOut(duration: 3.2).repeatForever(autoreverses: true)) {
+                breathing = true
+            }
+        }
+        .onDisappear {
+            withTransaction(Transaction(animation: nil)) { breathing = false }
+        }
+    }
+
+    // All illumination stays inside the galaxy region, below the action layer.
+    private var completionArtwork: some View {
         ZStack {
-            // MARK: - Space
-
-            SpaceBackground()
-                .ignoresSafeArea()
-
             // MARK: - Atmosphere
 
             Circle()
                 .fill(
                     RadialGradient(
                         colors: [
-                            .white.opacity(atmosphereAppeared ? 0.12 : 0),
-                            .white.opacity(0.025),
+                            .white.opacity(atmosphereAppeared ? 0.32 : 0),
+                            .white.opacity(0.055),
                             .clear
                         ],
                         center: .center,
                         startRadius: 0,
-                        endRadius: 190
+                        endRadius: 160
                     )
                 )
-                .frame(width: 380, height: 380)
-                .blur(radius: 32)
+                .frame(width: 320, height: 320)
+                .blur(radius: 22)
                 .scaleEffect(atmosphereAppeared ? 1 : 0.7)
 
             // MARK: - Completion Burst
 
             completionBurst
-
-            // MARK: - Galaxy
-
-            GalaxyView(
-                style: style,
-                progress: 1,
-                isCurrent: false,
-                isAnimated: true,
-                revealProgress: 1
-            )
-            .scaleEffect(
-                galaxyAppeared
-                    ? (galaxySettled ? 1 : 0.92)
-                    : 0.55
-            )
-            .opacity(galaxyAppeared ? 1 : 0)
 
             // MARK: - Central Completion Light
 
@@ -81,8 +127,8 @@ struct CompletionEventView: View {
                 .fill(
                     RadialGradient(
                         colors: [
-                            .white.opacity(completionLight ? 0.24 : 0.02),
-                            .white.opacity(completionLight ? 0.08 : 0),
+                            .white.opacity(completionLight ? 0.46 : 0.02),
+                            .white.opacity(completionLight ? 0.18 : 0),
                             .clear
                         ],
                         center: .center,
@@ -98,37 +144,21 @@ struct CompletionEventView: View {
                 .scaleEffect(breathing ? 1.04 : 1)
                 .opacity(galaxyAppeared ? 1 : 0)
 
-            // MARK: - Actions
+            // MARK: - Galaxy
 
-            if showActions {
-                completionActions
-                    .transition(
-                        .opacity
-                            .combined(with: .move(edge: .bottom))
-                    )
-            }
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .contentShape(Rectangle())
-
-        // MARK: - Tap
-
-        .onTapGesture {
-            guard animationFinished else {
-                return
-            }
-
-            guard !showActions else {
-                return
-            }
-
-            onReveal()
-        }
-
-        // MARK: - Start
-
-        .onAppear {
-            startCompletionAnimation()
+            GalaxyView(
+                style: style,
+                progress: 1,
+                isCurrent: true,
+                isAnimated: true,
+                revealProgress: 1
+            )
+            .scaleEffect(
+                galaxyAppeared
+                    ? (galaxySettled ? 1 : 0.92)
+                    : 0.55
+            )
+            .opacity(galaxyAppeared ? 1 : 0)
         }
     }
 
@@ -140,8 +170,8 @@ struct CompletionEventView: View {
 
             Circle()
                 .stroke(
-                    .white.opacity(burst ? 0 : 0.32),
-                    lineWidth: 1
+                    .white.opacity(burst ? 0 : 0.65),
+                    lineWidth: 1.4
                 )
                 .frame(width: 70, height: 70)
                 .scaleEffect(burst ? 4.0 : 0.2)
@@ -151,8 +181,8 @@ struct CompletionEventView: View {
 
             Circle()
                 .stroke(
-                    .white.opacity(burst ? 0 : 0.18),
-                    lineWidth: 0.8
+                    .white.opacity(burst ? 0 : 0.4),
+                    lineWidth: 1
                 )
                 .frame(width: 90, height: 90)
                 .scaleEffect(burst ? 2.8 : 0.15)
@@ -161,7 +191,7 @@ struct CompletionEventView: View {
 
             Circle()
                 .fill(
-                    .white.opacity(burstGlow ? 0.22 : 0)
+                    .white.opacity(burstGlow && !galaxySettled ? 0.32 : 0)
                 )
                 .frame(width: 90, height: 90)
                 .blur(radius: 18)
@@ -173,9 +203,9 @@ struct CompletionEventView: View {
 
                 Circle()
                     .fill(
-                        .white.opacity(burst ? 0 : 0.5)
+                        .white.opacity(burst ? 0 : 0.8)
                     )
-                    .frame(width: 2.5, height: 2.5)
+                    .frame(width: 3, height: 3)
                     .offset(
                         x: CGFloat(cos(angle)) * (burst ? 125 : 15),
                         y: CGFloat(sin(angle)) * (burst ? 125 : 15)
@@ -265,59 +295,49 @@ struct CompletionEventView: View {
         // Stillness.
         // -------------------------------------------------
 
-        Task { @MainActor in
-            try? await Task.sleep(for: .seconds(3.4))
+        // The View's task owns the delayed phase and is cancelled on disappearance.
+    }
 
-            guard !Task.isCancelled else {
-                return
-            }
-
+    private func settleWithoutMotion() {
+        withTransaction(Transaction(animation: nil)) {
+            atmosphereAppeared = true
+            galaxyAppeared = true
+            burst = true
+            burstGlow = true
+            galaxySettled = true
+            completionLight = true
+            breathing = false
             animationFinished = true
-
-            withAnimation(
-                .easeInOut(duration: 3.2)
-                    .repeatForever(autoreverses: true)
-            ) {
-                breathing = true
-            }
         }
     }
 
     // MARK: - Actions
 
-    private var completionActions: some View {
-        VStack {
-            // MARK: Message
+    private var artwork: some View {
+        UniverseArtwork { completionArtwork }
+            .clipped()
+            .allowsHitTesting(false)
+    }
 
-            VStack(spacing: 8) {
-                Text("Your universe is complete.")
-                    .font(.system(size: 21, weight: .regular))
-                    .foregroundStyle(.white)
-
-                Text("What comes next?")
-                    .font(.system(size: 15))
-                    .foregroundStyle(.white.opacity(0.38))
-            }
-            .padding(.top, 72)
-
-            Spacer()
-
-            // MARK: Choices
-
-            VStack(spacing: 12) {
-                completionAction(
-                    title: "My Universe",
-                    action: onMyUniverse
-                )
-
-                completionAction(
-                    title: "New Challenge",
-                    action: onNewChallenge
-                )
-            }
-            .frame(maxWidth: 280)
-            .padding(.bottom, 42)
+    private var completionMessage: some View {
+        VStack(spacing: 8) {
+            Text("Your universe is complete.")
+                .font(.title3)
+                .foregroundStyle(.white)
+            Text("What comes next?")
+                .font(.subheadline)
+                .foregroundStyle(.white.opacity(0.65))
         }
+        .multilineTextAlignment(.center)
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var completionChoices: some View {
+        VStack(spacing: 12) {
+            completionAction(title: "My Universe", action: onMyUniverse)
+            completionAction(title: "New Challenge", action: onNewChallenge)
+        }
+        .frame(maxWidth: 280)
     }
 
     // MARK: - Action
@@ -335,7 +355,7 @@ struct CompletionEventView: View {
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
+                Image(systemName: UniverseSymbols.forward)
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.white)
             }
@@ -361,6 +381,7 @@ struct CompletionEventView: View {
         onMyUniverse: {},
         onNewChallenge: {}
     )
+    .background { SpaceSceneBackground().ignoresSafeArea() }
 }
 
 #Preview("Completion — Cluster") {
@@ -371,6 +392,7 @@ struct CompletionEventView: View {
         onMyUniverse: {},
         onNewChallenge: {}
     )
+    .background { SpaceSceneBackground().ignoresSafeArea() }
 }
 
 #Preview("Completion — Spiral") {
@@ -381,4 +403,5 @@ struct CompletionEventView: View {
         onMyUniverse: {},
         onNewChallenge: {}
     )
+    .background { SpaceSceneBackground().ignoresSafeArea() }
 }

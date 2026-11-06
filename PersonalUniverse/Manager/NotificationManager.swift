@@ -4,40 +4,82 @@
 //
 
 import Foundation
+import Observation
+import OSLog
 import UserNotifications
 
+// Injectable platform boundary: tests can simulate permission/add failures without changing device settings.
+@MainActor
+struct NotificationClient {
+    var authorizationStatus: () async -> UNAuthorizationStatus
+    var requestAuthorization: () async throws -> Bool
+    var add: (UNNotificationRequest) async throws -> Void
+    var remove: ([String]) -> Void
+    var now: () -> Date = { .now }
+
+    static let live = NotificationClient(
+        authorizationStatus: { await UNUserNotificationCenter.current().notificationSettings().authorizationStatus },
+        requestAuthorization: { try await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound]) },
+        add: { try await UNUserNotificationCenter.current().add($0) },
+        remove: { UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: $0) }
+    )
+}
+
+@Observable
 @MainActor
 final class NotificationManager {
     static let shared = NotificationManager()
 
-    private init() {}
+    private(set) var errorMessage: String?
+    private(set) var permissionDenied = false
+    private weak var lastChallenge: UniverseChallenge?
+
+    @ObservationIgnored private var schedulingTask: Task<Void, Never>?
+    @ObservationIgnored private var pendingChallenge: UniverseChallenge?
+    private let client: NotificationClient
+
+    init(client: NotificationClient? = nil) { self.client = client ?? .live }
+
+    func retry() async {
+        if let lastChallenge { await scheduleCurrentReminder(for: lastChallenge) }
+        else if errorMessage != nil { _ = await requestPermission() }
+    }
+
+    private func report(_ message: String) {
+        errorMessage = message
+        Logger(subsystem: "PersonalUniverse", category: "Notifications").error("\(message, privacy: .public)")
+    }
 
     // MARK: - Permission
 
     func requestPermission() async -> Bool {
-        let center = UNUserNotificationCenter.current()
-
         do {
-            let settings = await center.notificationSettings()
+            let status = await client.authorizationStatus()
 
-            switch settings.authorizationStatus {
+            permissionDenied = false
+            switch status {
             case .authorized, .provisional, .ephemeral:
+                errorMessage = nil
                 return true
 
             case .notDetermined:
-                return try await center.requestAuthorization(
-                    options: [.alert, .sound]
-                )
+                let granted = try await client.requestAuthorization()
+                permissionDenied = !granted
+                if granted { errorMessage = nil }
+                else { report("Reminders are off in Settings. Enable notifications there to receive reminders.") }
+                return granted
 
             case .denied:
-                print("Notification permission has been denied.")
+                permissionDenied = true
+                report("Reminders are off in Settings. Enable notifications there to receive reminders.")
                 return false
 
             @unknown default:
+                report("Notification availability could not be determined. Try again.")
                 return false
             }
         } catch {
-            print("Failed to request notification permission: \(error)")
+            report("Notification permission could not be checked. Try again.")
             return false
         }
     }
@@ -45,6 +87,22 @@ final class NotificationManager {
     // MARK: - Schedule Current Reminder
 
     func scheduleCurrentReminder(for challenge: UniverseChallenge) async {
+        // Serialize OS writes so a slower old request cannot replace a newer title/time.
+        pendingChallenge = challenge
+        if let schedulingTask { await schedulingTask.value; return }
+        let task = Task { @MainActor in
+            while let next = pendingChallenge {
+                pendingChallenge = nil
+                await performSchedule(for: next)
+            }
+            schedulingTask = nil
+        }
+        schedulingTask = task
+        await task.value
+    }
+
+    private func performSchedule(for challenge: UniverseChallenge) async {
+        lastChallenge = challenge
         // Challenge must still be active.
         guard challenge.status == .active else {
             cancelAllReminders(for: challenge)
@@ -57,35 +115,30 @@ final class NotificationManager {
             return
         }
 
-        // Find the current day.
-        guard let currentDay = challenge.currentDay else {
+        guard (0...23).contains(challenge.reminderHour), (0...59).contains(challenge.reminderMinute) else {
+            report("The reminder time is invalid. Please check the challenge reminder settings.")
+            return
+        }
+        // Today's completion must not leave tomorrow without a reminder.
+        guard let currentDay = nextReminderDay(for: challenge) else {
             cancelAllReminders(for: challenge)
-            print("No current challenge day remains.")
             return
         }
 
-        // A reminder is only valid for an upcoming day.
-        guard currentDay.status == .upcoming else {
-            print("Current challenge day is not upcoming.")
-            cancelReminder(
-                for: challenge,
-                dayNumber: currentDay.dayNumber
-            )
+        let permitted = await requestPermission()
+        guard isReminderCurrent(for: challenge, day: currentDay) else {
+            cancelAllReminders(for: challenge)
             return
         }
+        guard permitted else { return }
 
         let identifier = reminderIdentifier(
             for: challenge,
             dayNumber: currentDay.dayNumber
         )
 
-        let center = UNUserNotificationCenter.current()
-
-        // Remove an existing reminder for this day
-        // before creating a new one.
-        center.removePendingNotificationRequests(
-            withIdentifiers: [identifier]
-        )
+        // Adding the same identifier replaces a request only on success.
+        // Do not discard the previous reminder before a potentially failing add.
 
         let calendar = Calendar.current
 
@@ -95,7 +148,7 @@ final class NotificationManager {
             for: currentDay,
             calendar: calendar
         ) else {
-            print("Could not determine date for Day \(currentDay.dayNumber).")
+            report("The reminder date could not be determined. Try again.")
             return
         }
 
@@ -109,12 +162,14 @@ final class NotificationManager {
         components.second = 0
 
         guard let reminderDate = calendar.date(from: components) else {
-            print("Could not create reminder date.")
+            report("The reminder time is invalid. Please check the challenge reminder settings.")
             return
         }
 
         // Never schedule something in the past.
-        guard reminderDate > .now else {
+        guard reminderDate > client.now() else {
+            cancelReminder(for: challenge, dayNumber: currentDay.dayNumber)
+            errorMessage = nil
             print(
                 "Reminder time has already passed for " +
                 "Day \(currentDay.dayNumber)."
@@ -147,7 +202,12 @@ final class NotificationManager {
         // MARK: Add Request
 
         do {
-            try await center.add(request)
+            try await client.add(request)
+            guard isReminderCurrent(for: challenge, day: currentDay) else {
+                cancelAllReminders(for: challenge)
+                return
+            }
+            errorMessage = nil
             print(
                 "Scheduled reminder for " +
                 "Day \(currentDay.dayNumber) at " +
@@ -155,7 +215,31 @@ final class NotificationManager {
                 "\(String(format: "%02d", challenge.reminderMinute))"
             )
         } catch {
-            print("Failed to schedule reminder: \(error)")
+            // Completion/disable may happen while the OS is processing add().
+            guard isReminderCurrent(for: challenge, day: currentDay) else {
+                cancelAllReminders(for: challenge)
+                return
+            }
+            report("Your challenge was saved, but its reminder could not be scheduled. Try again.")
+        }
+    }
+
+    private func isReminderCurrent(for challenge: UniverseChallenge, day: ChallengeDay) -> Bool {
+        challenge.status == .active && challenge.reminderEnabled && day.status == .upcoming &&
+        nextReminderDay(for: challenge)?.dayNumber == day.dayNumber
+    }
+
+    private func nextReminderDay(for challenge: UniverseChallenge) -> ChallengeDay? {
+        let calendar = Calendar.autoupdatingCurrent
+        let now = client.now()
+        let today = calendar.startOfDay(for: now)
+        return challenge.orderedDays.first { day in
+            guard day.status == .upcoming,
+                  let date = challenge.date(for: day, calendar: calendar), date >= today,
+                  let reminder = calendar.date(bySettingHour: challenge.reminderHour,
+                                               minute: challenge.reminderMinute, second: 0, of: date)
+            else { return false }
+            return reminder > now
         }
     }
 
@@ -189,27 +273,6 @@ final class NotificationManager {
             return
         }
 
-        // There must be another current day.
-        guard let nextDay = challenge.currentDay else {
-            cancelAllReminders(for: challenge)
-            print(
-                "No next day remains. " +
-                "No further reminder scheduled."
-            )
-            return
-        }
-
-        // The next day must actually be upcoming.
-        guard nextDay.status == .upcoming else {
-            cancelAllReminders(for: challenge)
-            print(
-                "No upcoming day available. " +
-                "No further reminder scheduled."
-            )
-            return
-        }
-
-        // Schedule ONLY the next current day.
         await scheduleCurrentReminder(for: challenge)
     }
 
@@ -224,11 +287,7 @@ final class NotificationManager {
             dayNumber: dayNumber
         )
 
-        UNUserNotificationCenter
-            .current()
-            .removePendingNotificationRequests(
-                withIdentifiers: [identifier]
-            )
+        client.remove([identifier])
 
         print("Cancelled reminder for Day \(dayNumber)")
     }
@@ -236,6 +295,11 @@ final class NotificationManager {
     // MARK: - Cancel All Challenge Reminders
 
     func cancelAllReminders(for challenge: UniverseChallenge) {
+        if lastChallenge == nil || lastChallenge?.id == challenge.id {
+            errorMessage = nil
+            permissionDenied = false
+            lastChallenge = nil
+        }
         let identifiers = challenge.orderedDays.map {
             reminderIdentifier(
                 for: challenge,
@@ -243,11 +307,7 @@ final class NotificationManager {
             )
         }
 
-        UNUserNotificationCenter
-            .current()
-            .removePendingNotificationRequests(
-                withIdentifiers: identifiers
-            )
+        client.remove(identifiers)
 
         print("Cancelled all reminders for \(challenge.title)")
     }

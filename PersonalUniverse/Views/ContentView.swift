@@ -24,6 +24,7 @@ struct ContentView: View {
     // MARK: - Refresh
 
     @State private var refreshDate = Date()
+    @State private var saveErrorMessage: String?
 
     // MARK: - Event State
 
@@ -57,8 +58,9 @@ struct ContentView: View {
             ZStack {
                 // MARK: Background
 
-                SpaceBackground()
+                SpaceSceneBackground()
                     .ignoresSafeArea()
+                    .zIndex(-1)
 
                 // MARK: Main Content
 
@@ -100,12 +102,16 @@ struct ContentView: View {
                         } label: {
                             Text("My Universe")
                                 .font(.subheadline)
+                                .lineLimit(1)
+                                .fixedSize(horizontal: true, vertical: false)
                                 .foregroundStyle(
                                     .white.opacity(0.7)
                                 )
                         }
                         .buttonStyle(.plain)
+                        .fixedSize(horizontal: true, vertical: false)
                     }
+                    .sharedBackgroundVisibility(.hidden)
                 }
             }
             // MARK: Navigation Destinations
@@ -121,6 +127,25 @@ struct ContentView: View {
                 }
             }
         }
+        .onOpenURL { url in
+            guard url.scheme == "personaluniverse" else { return }
+            switch url.host {
+            case "my-universe":
+                navigationPath = NavigationPath([Route.myUniverse])
+            case "create-challenge":
+                // A stale empty widget must not replace a challenge that is active now.
+                navigationPath = NavigationPath([currentChallenge == nil ? Route.newChallenge : Route.myUniverse])
+            default:
+                break
+            }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openNewChallenge)) { _ in
+            activeEvent = .none
+            eventChallenge = nil
+            showCompletionActions = false
+            navigationPath = NavigationPath([Route.newChallenge])
+        }
+        .saveErrorNotice($saveErrorMessage)
         // MARK: Lifecycle
 
         .onAppear {
@@ -141,7 +166,8 @@ struct ContentView: View {
         }
         // MARK: Periodic Refresh
 
-        .task {
+        .task(id: scenePhase) {
+            guard scenePhase == .active else { return }
             while !Task.isCancelled {
                 try? await Task.sleep(
                     for: .seconds(60)
@@ -186,7 +212,7 @@ struct ContentView: View {
                         for: .seconds(2.5)
                     )
 
-                    guard activeEvent == .growth else {
+                    guard !Task.isCancelled, activeEvent == .growth else {
                         return
                     }
 
@@ -264,11 +290,11 @@ struct ContentView: View {
         }
 
         do {
-            try modelContext.save()
+            if modelContext.hasChanges { try modelContext.saveWithRecoverySnapshot() }
         } catch {
-            print(
-                "Failed to save completed challenge: \(error)"
-            )
+            modelContext.rollback()
+            saveErrorMessage = "Your completed challenge could not be saved. Please try again."
+            return
         }
 
         // The challenge is no longer active.
@@ -407,11 +433,11 @@ struct ContentView: View {
         // -------------------------------------------------
 
         do {
-            try modelContext.save()
+            if modelContext.hasChanges { try modelContext.saveWithRecoverySnapshot() }
         } catch {
-            print(
-                "Failed to save PersonalUniverse changes: \(error)"
-            )
+            modelContext.rollback()
+            saveErrorMessage = "Your challenge could not be updated. Please try again."
+            return
         }
 
         // -------------------------------------------------
@@ -433,23 +459,13 @@ struct ContentView: View {
     }
 
     private func refreshNotifications() {
-        guard let challenge = currentChallenge else {
-            return
-        }
-
+        guard let challenge = currentChallenge else { return }
         guard challenge.reminderEnabled else {
+            NotificationManager.shared.cancelAllReminders(for: challenge)
             return
         }
 
         Task { @MainActor in
-            let granted =
-                await NotificationManager.shared
-                    .requestPermission()
-
-            guard granted else {
-                return
-            }
-
             await NotificationManager.shared
                 .scheduleCurrentReminder(
                     for: challenge

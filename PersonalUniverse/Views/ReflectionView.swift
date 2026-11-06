@@ -9,7 +9,18 @@ import SwiftUI
 
 struct ReflectionView: View {
     @Binding var reflection: String
-    let onComplete: () -> Void
+    let onComplete: () -> Bool
+
+    @State private var draftReflection: String
+    @State private var saveErrorMessage: String?
+    @State private var showDiscardConfirmation = false
+    @Environment(\.dismiss) private var dismiss
+
+    init(reflection: Binding<String>, onComplete: @escaping () -> Bool) {
+        _reflection = reflection
+        self.onComplete = onComplete
+        _draftReflection = State(initialValue: reflection.wrappedValue)
+    }
 
     private let characterLimit = 150
 
@@ -37,98 +48,118 @@ struct ReflectionView: View {
             Color.black
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
-                // MARK: - Top
+            ScrollView {
+                VStack(spacing: 0) {
+                    // MARK: - Top
 
-                Spacer()
-                    .frame(height: topPadding)
-
-                // MARK: - Prompt
-
-                Text("What did you discover today?")
-                    .font(
-                        .system(
-                            size: 20,
-                            weight: .medium
-                        )
-                    )
-                    .foregroundStyle(.white)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-                    .padding(.bottom, 20)
-
-                // MARK: - Reflection Box
-
-                TextEditor(text: $reflection)
-                    .tint(.white.opacity(0.65))
-                    .scrollContentBackground(.hidden)
-                    .foregroundStyle(.white)
-                    .font(
-                        .system(
-                            size: 17,
-                            weight: .regular
-                        )
-                    )
-                    .padding(12)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: contentHeight)
-                    .background(
-                        RoundedRectangle(
-                            cornerRadius: contentCornerRadius
-                        )
-                        .fill(.white.opacity(0.08))
-                    )
-                    .overlay(
-                        RoundedRectangle(
-                            cornerRadius: contentCornerRadius
-                        )
-                        .stroke(
-                            .white.opacity(0.15),
-                            lineWidth: 1
-                        )
-                    )
-                    .onChange(
-                        of: reflection
-                    ) {
-                        limitReflection()
-                    }
-
-                // MARK: - Character Count
-
-                HStack {
                     Spacer()
+                        .frame(height: topPadding)
 
-                    Text("\(reflection.count) / \(characterLimit)")
-                        .font(.system(size: 13))
-                        .foregroundStyle(
-                            reflection.count >= characterLimit
-                            ? .white
-                            : .white.opacity(0.5)
+                    // MARK: - Prompt
+
+                    Text("What did you discover today?")
+                        .font(
+                            .system(
+                                size: 20,
+                                weight: .medium
+                            )
                         )
+                        .foregroundStyle(.white)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                        .padding(.bottom, 20)
+
+                    // MARK: - Reflection Box
+
+                    TextEditor(text: $draftReflection)
+                        .tint(.white.opacity(0.65))
+                        .scrollContentBackground(.hidden)
+                        .foregroundStyle(.white)
+                        .font(
+                            .system(
+                                size: 17,
+                                weight: .regular
+                            )
+                        )
+                        .padding(12)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: contentHeight)
+                        .background(
+                            RoundedRectangle(
+                                cornerRadius: contentCornerRadius
+                            )
+                            .fill(.white.opacity(0.08))
+                        )
+                        .overlay(
+                            RoundedRectangle(
+                                cornerRadius: contentCornerRadius
+                            )
+                            .stroke(
+                                .white.opacity(0.15),
+                                lineWidth: 1
+                            )
+                        )
+                        .onChange(
+                            of: draftReflection
+                        ) {
+                            limitReflection()
+                        }
+
+                    // MARK: - Character Count
+
+                    HStack {
+                        Spacer()
+
+                        Text("\(draftReflection.count) / \(characterLimit)")
+                            .font(.system(size: 13))
+                            .foregroundStyle(
+                                draftReflection.count >= characterLimit
+                                ? .white
+                                : .white.opacity(0.5)
+                            )
+                    }
+                    .frame(height: 20)
+                    .padding(.top, 6)
+
+                    // MARK: - Space Before Complete
+
+                    Spacer()
+                        .frame(height: 16)
+
+                    // MARK: - Complete
+
+                    Button {
+                        showCompletionConfirmation = true
+                    } label: {
+                        sparkleView
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isCompleting)
+                    .accessibilityLabel("Complete reflection")
+                    .padding(.bottom, bottomPadding)
                 }
-                .frame(height: 20)
-                .padding(.top, 6)
-
-                // MARK: - Space Before Complete
-
-                Spacer()
-                    .frame(height: 16)
-
-                // MARK: - Complete
-
-                Button {
-                    showCompletionConfirmation = true
-                } label: {
-                    sparkleView
-                }
-                .buttonStyle(.plain)
-                .disabled(isCompleting)
-                .accessibilityLabel("Complete reflection")
-                .padding(.bottom, bottomPadding)
+                .frame(maxWidth: 560)
+                .padding(.horizontal, horizontalPadding)
+                .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, horizontalPadding)
+            .scrollDismissesKeyboard(.interactively)
         }
 
+        .interactiveDismissDisabled(!draftReflection.isEmpty || isCompleting)
+        .overlay(alignment: .topTrailing) {
+            Button("Close") {
+                if draftReflection.isEmpty { dismiss() }
+                else { showDiscardConfirmation = true }
+            }
+            .padding()
+            .foregroundStyle(.white)
+            .disabled(isCompleting)
+        }
+        .confirmationDialog("Discard unfinished reflection?", isPresented: $showDiscardConfirmation, titleVisibility: .visible) {
+            Button("Discard", role: .destructive) { dismiss() }
+            Button("Keep writing", role: .cancel) {}
+        }
+        .saveErrorNotice($saveErrorMessage)
         // MARK: - Completion Confirmation
 
         .alert(
@@ -179,12 +210,12 @@ struct ReflectionView: View {
     // MARK: - Character Limit
 
     private func limitReflection() {
-        guard reflection.count > characterLimit else {
+        guard draftReflection.count > characterLimit else {
             return
         }
 
-        reflection = String(
-            reflection.prefix(characterLimit)
+        draftReflection = String(
+            draftReflection.prefix(characterLimit)
         )
     }
 
@@ -205,16 +236,6 @@ struct ReflectionView: View {
         }
 
         DispatchQueue.main.asyncAfter(
-            deadline: .now() + 0.18
-        ) {
-            withAnimation(
-                .easeInOut(duration: 0.22)
-            ) {
-                isCompleting = false
-            }
-        }
-
-        DispatchQueue.main.asyncAfter(
             deadline: .now() + 0.48
         ) {
             withAnimation(
@@ -227,7 +248,13 @@ struct ReflectionView: View {
         DispatchQueue.main.asyncAfter(
             deadline: .now() + 0.63
         ) {
-            onComplete()
+            let original = reflection
+            reflection = draftReflection
+            if !onComplete() {
+                isCompleting = false
+                reflection = original
+                saveErrorMessage = "Your reflection could not be saved. Your draft is still here. Please try again."
+            }
         }
     }
 }
@@ -237,6 +264,6 @@ struct ReflectionView: View {
 #Preview {
     ReflectionView(
         reflection: .constant(""),
-        onComplete: {}
+        onComplete: { true }
     )
 }

@@ -26,6 +26,15 @@ struct PersonalUniverseWidget: Widget {
             provider: WidgetProvider()
         ) { entry in
             WidgetRootView(universe: entry.universe)
+                .overlay(alignment: .top) {
+                    if let message = entry.universe.syncMessage {
+                        Text(message)
+                            .font(.caption2)
+                            .padding(4)
+                            .background(.black.opacity(0.85), in: Capsule())
+                            .accessibilityLabel(message)
+                    }
+                }
                 .widgetURL(
                     WidgetDeepLink.url(
                         hasActiveChallenge: entry.universe.hasActiveChallenge

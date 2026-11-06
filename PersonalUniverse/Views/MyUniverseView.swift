@@ -21,6 +21,7 @@ struct MyUniverseView: View {
     // MARK: - Navigation
 
     @State private var selectedChallenge: UniverseChallenge?
+    @State private var saveErrorMessage: String?
 
     // MARK: - Universe Camera
 
@@ -103,8 +104,9 @@ struct MyUniverseView: View {
             ZStack {
                 // MARK: Background
 
-                SpaceBackground()
+                SpaceSceneBackground()
                     .ignoresSafeArea()
+                    .zIndex(-1)
 
                 // MARK: Content
 
@@ -119,6 +121,7 @@ struct MyUniverseView: View {
                 }
             }
         }
+        .saveErrorNotice($saveErrorMessage)
         .navigationTitle("My Universe")
         .navigationBarTitleDisplayMode(.inline)
 
@@ -249,6 +252,10 @@ struct MyUniverseView: View {
 
                 selectedChallenge = challenge
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Open \(challenge.title)")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { selectedChallenge = challenge }
 
             // MARK: Title
 
@@ -308,6 +315,10 @@ struct MyUniverseView: View {
 
                 selectedChallenge = challenge
             }
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("Open \(challenge.title)")
+            .accessibilityAddTraits(.isButton)
+            .accessibilityAction { selectedChallenge = challenge }
 
             // MARK: Title
 
@@ -369,8 +380,8 @@ struct MyUniverseView: View {
                     .fill(
                         RadialGradient(
                             colors: [
-                                .white.opacity(0.14),
-                                .white.opacity(0.05),
+                                .white.opacity(0.22),
+                                .white.opacity(0.065),
                                 .clear
                             ],
                             center: .center,
@@ -387,7 +398,7 @@ struct MyUniverseView: View {
 
                 Circle()
                     .stroke(
-                        .white.opacity(0.10),
+                        .white.opacity(0.20),
                         lineWidth: 1
                     )
                     .frame(
@@ -597,9 +608,10 @@ struct MyUniverseView: View {
 
     private func saveChanges() {
         do {
-            try modelContext.save()
+            try modelContext.saveWithRecoverySnapshot()
         } catch {
-            print("Failed to save universe positions: \(error)")
+            modelContext.rollback()
+            saveErrorMessage = "Galaxy positions could not be saved. Reopen this screen to try again."
         }
     }
 

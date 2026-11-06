@@ -15,6 +15,8 @@ struct ChallengeJourneyView: View {
     // MARK: - Reflection
 
     @State private var selectedDay: ChallengeDay?
+    @State private var showSettings = false
+    @State private var saveErrorMessage: String?
 
     // MARK: - Event State
 
@@ -36,8 +38,9 @@ struct ChallengeJourneyView: View {
 
     var body: some View {
         ZStack {
-            SpaceBackground()
+            SpaceSceneBackground()
                 .ignoresSafeArea()
+                .zIndex(-1)
 
             // -------------------------------------------------
             // Events belong to this ChallengeJourneyView when
@@ -65,9 +68,25 @@ struct ChallengeJourneyView: View {
             saveChanges()
         }
         // MARK: Reflection Sheet
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                if activeEvent == .none {
+                    Button("Edit") { showSettings = true }
+                        .font(.subheadline)
+                        .foregroundStyle(.white.opacity(0.65))
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Edit challenge")
+                }
+            }
+            .sharedBackgroundVisibility(.hidden)
+        }
+        .sheet(isPresented: $showSettings) {
+            ChallengeSettingsView(challenge: challenge)
+        }
+        .saveErrorNotice($saveErrorMessage)
         .sheet(item: $selectedDay) { day in
             dayReflectionView(for: day)
-                .presentationDetents([.fraction(0.40)])
+                .presentationDetents([.height(420), .large])
                 .presentationDragIndicator(.visible)
                 .presentationBackground(.black)
         }
@@ -88,7 +107,8 @@ struct ChallengeJourneyView: View {
                     isAnimated: true,
                     revealProgress: challenge.progress
                 )
-                .frame(width: 340, height: 340)
+                .frame(maxWidth: 340)
+                .frame(maxWidth: .infinity)
 
                 // MARK: Challenge Progress
 
@@ -126,7 +146,7 @@ struct ChallengeJourneyView: View {
             }
             .task {
                 try? await Task.sleep(for: .seconds(2.5))
-                guard activeEvent == .growth else {
+                guard !Task.isCancelled, activeEvent == .growth else {
                     return
                 }
                 await MainActor.run {
@@ -188,20 +208,21 @@ struct ChallengeJourneyView: View {
 
     // MARK: - Complete Day
 
-    private func completeCurrentDay(_ day: ChallengeDay) {
+    private func completeCurrentDay(_ day: ChallengeDay) -> Bool {
+        guard day.status == .upcoming, day.challenge === challenge else { return false }
         guard let currentDay = challenge.currentDay else {
-            return
+            return false
         }
 
         guard day.dayNumber == currentDay.dayNumber else {
-            return
+            return false
         }
 
         // -------------------------------------------------
         // Complete the day first.
         // -------------------------------------------------
 
-        day.complete(at: .now)
+        challenge.completeDay(day, at: .now)
 
         // -------------------------------------------------
         // Determine whether this was the final day.
@@ -210,24 +231,21 @@ struct ChallengeJourneyView: View {
         let isFinalDay = challenge.completedDayCount == challenge.days.count
         let event: UniverseEvent = isFinalDay ? .completion : .growth
 
-        // -------------------------------------------------
-        // For a normal day:
-        //
-        // Update the challenge immediately so that the
-        // galaxy/progress is already grown when the
-        // GrowthEventView appears.
-        //
-        // For the final day:
-        //
-        // Keep the challenge active until the completion
-        // event has taken ownership of the screen.
-        // -------------------------------------------------
+        // 완료 상태도 함께 저장한 뒤 이벤트를 시작합니다.
+        challenge.updateCompletionStatus()
 
-        if !isFinalDay {
-            challenge.updateCompletionStatus()
+        guard saveChanges(reportError: false) else { return false }
+
+        if isFinalDay {
+            WidgetSyncManager.saveEmpty()
+        } else {
+            WidgetSyncManager.save(challenge: challenge)
         }
-
-        saveChanges()
+        Task { @MainActor in
+            await NotificationManager.shared.rescheduleAfterCompletion(
+                for: challenge, completedDayNumber: day.dayNumber
+            )
+        }
 
         // -------------------------------------------------
         // Close the reflection sheet FIRST.
@@ -246,6 +264,7 @@ struct ChallengeJourneyView: View {
         DispatchQueue.main.async {
             startEvent(event)
         }
+        return true
     }
 
     // MARK: - Start Event
@@ -278,18 +297,18 @@ struct ChallengeJourneyView: View {
 
     // MARK: - Completion Event
 
-    private func finalizeCompletedChallenge() {
+    private func finalizeCompletedChallenge() -> Bool {
         if challenge.status != .completed {
             challenge.status = .completed
         }
 
-        saveChanges()
+        return saveChanges()
     }
 
     // MARK: - Completion → My Universe
 
     private func goToMyUniverse() {
-        finalizeCompletedChallenge()
+        guard finalizeCompletedChallenge() else { return }
 
         withAnimation(.easeOut(duration: 0.25)) {
             activeEvent = .none
@@ -312,7 +331,7 @@ struct ChallengeJourneyView: View {
     // MARK: - Completion → New Challenge
 
     private func goToNewChallenge() {
-        finalizeCompletedChallenge()
+        guard finalizeCompletedChallenge() else { return }
 
         withAnimation(.easeOut(duration: 0.25)) {
             activeEvent = .none
@@ -341,11 +360,18 @@ struct ChallengeJourneyView: View {
 
     // MARK: - Save
 
-    private func saveChanges() {
+    @discardableResult
+    private func saveChanges(reportError: Bool = true) -> Bool {
+        guard modelContext.hasChanges else { return true }
         do {
-            try modelContext.save()
+            try modelContext.saveWithRecoverySnapshot()
+            return true
         } catch {
-            print("Failed to save PersonalUniverse changes: \(error)")
+            modelContext.rollback()
+            if reportError {
+                saveErrorMessage = "Your changes could not be saved. Please try again."
+            }
+            return false
         }
     }
 }
@@ -359,25 +385,18 @@ extension Notification.Name {
 // MARK: - Preview
 
 #Preview("Challenge Journey") {
-    let container = try! ModelContainer(
-        for: UniverseChallenge.self,
-        ChallengeDay.self,
+    if let container = try? ModelContainer(
+        for: UniverseChallenge.self, ChallengeDay.self,
         configurations: ModelConfiguration(isStoredInMemoryOnly: true)
-    )
-
-    let context = ModelContext(container)
-
-    let challenge = UniverseChallenge(
-        title: "Draw every day",
-        length: .thirty,
-        startDate: .now,
-        galaxy: .expanding
-    )
-
-    context.insert(challenge)
-
-    return NavigationStack {
-        ChallengeJourneyView(challenge: challenge)
+    ) {
+        let context = container.mainContext
+        let challenge = UniverseChallenge(
+            title: "Draw every day", length: .thirty, startDate: .now, galaxy: .expanding
+        )
+        let _ = context.insert(challenge)
+        NavigationStack { ChallengeJourneyView(challenge: challenge) }
+            .modelContainer(container)
+    } else {
+        ContentUnavailableView("Preview storage unavailable", systemImage: "externaldrive.badge.exclamationmark")
     }
-    .modelContainer(container)
 }

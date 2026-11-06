@@ -8,8 +8,17 @@
 import SwiftUI
 
 struct SpaceBackground: View {
-    // IMPORTANT:
-    // @State keeps the randomly generated stars stable.
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.scenePhase) private var scenePhase
+
+    @State private var isVisible = false
+    private let isAnimated: Bool
+
+    init(isAnimated: Bool = true) { self.isAnimated = isAnimated }
+
+    private var animateBackground: Bool { isAnimated && isVisible && !reduceMotion && scenePhase == .active }
+
+    // 무작위 별의 위치는 View 갱신 중에도 유지합니다.
     @State private var stars: [BackgroundStar] = {
         (0..<70).map { _ in
             BackgroundStar()
@@ -17,31 +26,23 @@ struct SpaceBackground: View {
     }()
 
     var body: some View {
-        TimelineView(.animation) { timeline in
-            GeometryReader { geometry in
-                ZStack {
-                    Color.black
-                        .ignoresSafeArea()
-                    ForEach(stars) { star in
-                        Circle()
-                            .fill(.white)
-                            .frame(
-                                width: star.size,
-                                height: star.size
-                            )
-                            .position(
-                                x: star.x * geometry.size.width,
-                                y: star.y * geometry.size.height
-                            )
-                            .opacity(
-                                star.twinkle(
-                                    at: timeline.date
-                                )
-                            )
-                    }
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animateBackground)) { timeline in
+            Canvas { context, size in
+                context.fill(Path(CGRect(origin: .zero, size: size)), with: .color(.black))
+                for star in stars {
+                    let rect = CGRect(x: star.x * size.width - star.size / 2,
+                                      y: star.y * size.height - star.size / 2,
+                                      width: star.size, height: star.size)
+                    context.fill(Path(ellipseIn: rect), with: .color(.white.opacity(star.twinkle(at: timeline.date))))
                 }
             }
         }
+
+        .onAppear { isVisible = true }
+        .onDisappear { isVisible = false }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+
     }
 }
 

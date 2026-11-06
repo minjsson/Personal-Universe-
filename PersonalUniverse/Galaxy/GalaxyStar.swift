@@ -20,17 +20,4 @@ struct GalaxyStar {
     /// during a growth/completion animation.
     let revealAt: Double
     
-    init(
-        x: CGFloat,
-        y: CGFloat,
-        size: CGFloat,
-        opacity: Double,
-        revealAt: Double = 0
-    ) {
-        self.x = x
-        self.y = y
-        self.size = size
-        self.opacity = opacity
-        self.revealAt = revealAt
-    }
 }

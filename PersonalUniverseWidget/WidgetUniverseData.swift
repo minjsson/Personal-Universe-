@@ -27,6 +27,7 @@ struct WidgetDayData: Identifiable, Codable {
 // MARK: - Widget Universe Data
 
 struct WidgetUniverseData: Codable {
+    var syncMessage: String? = nil
     let hasActiveChallenge: Bool
     let title: String
     let galaxyRawValue: String
@@ -41,6 +42,25 @@ struct WidgetUniverseData: Codable {
 
     // All challenge days
     let days: [WidgetDayData]
+
+    // Calendar presentation advances without changing the app's persisted model.
+    func projected(at date: Date, calendar: Calendar = .autoupdatingCurrent) -> Self {
+        guard hasActiveChallenge, let startDate, totalDays > 0,
+              let offset = calendar.dateComponents([.day], from: calendar.startOfDay(for: startDate),
+                                                    to: calendar.startOfDay(for: date)).day else { return self }
+        let today = offset + 1
+        return Self(
+            syncMessage: syncMessage,
+            hasActiveChallenge: today <= totalDays,
+            title: title, galaxyRawValue: galaxyRawValue, totalDays: totalDays, progress: progress,
+            currentDayNumber: (1...totalDays).contains(today) ? today : nil,
+            startDate: startDate,
+            days: days.map { day in
+                WidgetDayData(dayNumber: day.dayNumber,
+                              state: day.state == .upcoming && day.dayNumber < today ? .missed : day.state)
+            }
+        )
+    }
 
     // MARK: - Empty
 

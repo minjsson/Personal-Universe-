@@ -52,6 +52,7 @@ struct EnterChallengeView: View {
         )
 
     @State private var isCreating = false
+    @State private var saveErrorMessage: String?
 
     // MARK: - Constants
 
@@ -70,8 +71,9 @@ struct EnterChallengeView: View {
 
     var body: some View {
         ZStack {
-            SpaceBackground()
+            SpaceSceneBackground()
                 .ignoresSafeArea()
+                .zIndex(-1)
 
             Color.black
                 .opacity(0.35)
@@ -80,28 +82,33 @@ struct EnterChallengeView: View {
             VStack(spacing: 0) {
                 topNavigation
 
-                Group {
-                    switch step {
-                    case 0:
-                        titleStep
-                    case 1:
-                        durationStep
-                    case 2:
-                        reminderStep
-                    case 3:
-                        galaxyStep
-                    default:
-                        EmptyView()
+                GeometryReader { geometry in
+                    ScrollView {
+                        Group {
+                            switch step {
+                            case 0:
+                                titleStep
+                            case 1:
+                                durationStep
+                            case 2:
+                                reminderStep
+                            case 3:
+                                galaxyStep
+                            default:
+                                EmptyView()
+                            }
+                        }
+                        .frame(maxWidth: 560)
+                        .frame(maxWidth: .infinity, minHeight: max(geometry.size.height, 480))
                     }
+                    .scrollBounceBehavior(.basedOnSize)
+                    .scrollDismissesKeyboard(.interactively)
                 }
-                .frame(
-                    maxWidth: .infinity,
-                    maxHeight: .infinity
-                )
 
                 bottomNavigation
             }
         }
+        .saveErrorNotice($saveErrorMessage)
         .navigationTitle("")
         .navigationBarTitleDisplayMode(.inline)
         .navigationBarBackButtonHidden(true)
@@ -114,7 +121,7 @@ struct EnterChallengeView: View {
             Button {
                 previousStep()
             } label: {
-                Image(systemName: "chevron.left")
+                Image(systemName: UniverseSymbols.back)
                     .font(
                         .system(
                             size: 17,
@@ -177,7 +184,7 @@ struct EnterChallengeView: View {
                     ProgressView()
                         .tint(.white)
                 } else {
-                    Image(systemName: "chevron.right")
+                    Image(systemName: UniverseSymbols.forward)
                         .font(
                             .system(
                                 size: 17,
@@ -238,23 +245,13 @@ struct EnterChallengeView: View {
                 "",
                 text: $title
             )
-            .font(.system(size: 20))
-            .foregroundStyle(.white)
-            .multilineTextAlignment(.center)
-            .tint(.white)
-            .padding(.vertical, 14)
-            .overlay(
-                Rectangle()
-                    .fill(.white.opacity(0.2))
-                    .frame(height: 1),
-                alignment: .bottom
-            )
+            .modifier(UniverseNameFieldStyle())
             .padding(.horizontal, 50)
             .placeholder(
                 when: title.isEmpty
             ) {
                 Text("Enter here")
-                    .font(.system(size: 20))
+                    .font(.title3)
                     .foregroundStyle(.white.opacity(0.25))
             }
 
@@ -825,18 +822,17 @@ struct EnterChallengeView: View {
 
         let descriptor = FetchDescriptor<UniverseChallenge>()
 
-        if let existingChallenges =
-            try? modelContext.fetch(descriptor) {
-            for challenge
-            in existingChallenges
-            where challenge.status == .active {
-                challenge.status = .completed
-
-                NotificationManager.shared
-                    .cancelAllReminders(
-                        for: challenge
-                    )
-            }
+        let previousActiveChallenges: [UniverseChallenge]
+        do {
+            previousActiveChallenges = try modelContext.fetch(descriptor)
+                .filter { $0.status == .active }
+        } catch {
+            saveErrorMessage = "Existing challenges could not be loaded. Please try again."
+            isCreating = false
+            return
+        }
+        for challenge in previousActiveChallenges {
+            challenge.status = .completed
         }
 
         // MARK: Start Date
@@ -869,7 +865,11 @@ struct EnterChallengeView: View {
         // MARK: Save
 
         do {
-            try modelContext.save()
+            try modelContext.saveWithRecoverySnapshot()
+            // 새 챌린지 저장 성공 후에만 이전 알림을 취소합니다.
+            for previousChallenge in previousActiveChallenges {
+                NotificationManager.shared.cancelAllReminders(for: previousChallenge)
+            }
 
             // -------------------------------------------------
             // Widget
@@ -899,11 +899,14 @@ struct EnterChallengeView: View {
                             for: challenge
                         )
                 }
+            } else {
+                NotificationManager.shared.cancelAllReminders(for: challenge)
             }
 
             dismiss()
         } catch {
-            print("Failed to create challenge: \(error)")
+            modelContext.rollback()
+            saveErrorMessage = "Your challenge could not be created. Your selections are still here. Please try again."
             isCreating = false
         }
     }

@@ -38,7 +38,7 @@ struct GalaxyBodyView: View {
                 Circle()
                     .fill(.white)
                     .frame(width: galaxyBody.size, height: galaxyBody.size)
-                    .opacity(twinkle ? 0.45 : 0.95)
+                    .opacity(twinkle ? (isCurrent ? 0.72 : 0.45) : 0.95)
                     .shadow(color: .white.opacity(0.3), radius: galaxyBody.size)
                     .scaleEffect(twinkle ? 0.8 : 1)
             }

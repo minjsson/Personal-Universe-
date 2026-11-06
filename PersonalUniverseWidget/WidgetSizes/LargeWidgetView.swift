@@ -40,7 +40,7 @@ struct LargeWidgetView: View {
             VStack(spacing: 12) {
                 Spacer()
 
-                Image(systemName: "sparkles")
+                Image(systemName: UniverseSymbols.sparkle)
                     .font(.system(size: 28, weight: .light))
                     .foregroundStyle(.white.opacity(0.9))
 
