@@ -351,15 +351,11 @@ struct CompletionEventView: View {
         } label: {
             HStack {
                 Text(title)
-                    .font(.system(size: 16, weight: .regular))
 
                 Spacer()
 
-                Image(systemName: UniverseSymbols.forward)
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundStyle(.white)
+                UniverseNavigationArrow(symbol: UniverseSymbols.forward)
             }
-            .foregroundStyle(.white)
             .padding(.vertical, 15)
             .frame(maxWidth: .infinity)
             .contentShape(
@@ -367,7 +363,7 @@ struct CompletionEventView: View {
                     .inset(by: -12)
             )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(UniverseNavigationButtonStyle())
     }
 }
 

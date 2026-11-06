@@ -1,18 +1,39 @@
 import SwiftUI
 
+// Navigation stays flat; selection cards and recovery actions have separate roles.
+struct UniverseNavigationButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.subheadline)
+            .foregroundStyle(.white.opacity(isEnabled ? 0.8 : 0.3))
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
+            .opacity(configuration.isPressed ? 0.6 : 1)
+    }
+}
+
+struct UniverseNavigationArrow: View {
+    let symbol: String
+
+    var body: some View {
+        Image(systemName: symbol)
+            .font(.system(size: 17, weight: .medium))
+    }
+}
+
 // Navigation arrows share the setup screen's quiet appearance and full tap area.
 struct UniverseBackButton: View {
     var action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: UniverseSymbols.back)
-                .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(.white.opacity(0.8))
+            UniverseNavigationArrow(symbol: UniverseSymbols.back)
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(UniverseNavigationButtonStyle())
         .accessibilityLabel("Back")
     }
 }

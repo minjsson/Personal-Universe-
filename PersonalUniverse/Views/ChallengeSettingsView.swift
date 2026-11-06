@@ -104,18 +104,12 @@ struct ChallengeSettingsView: View {
         Button("Cancel") {
             if hasChanges { confirmDiscard = true } else { dismiss() }
         }
-        .font(.subheadline)
-        .foregroundStyle(.white.opacity(0.7))
-        .frame(minHeight: 44)
-        .buttonStyle(.plain)
+        .buttonStyle(UniverseNavigationButtonStyle())
     }
 
     private var saveButton: some View {
         Button("Save", action: save)
-            .font(.subheadline.weight(.medium))
-            .foregroundStyle(.white.opacity(cleanTitle.isEmpty || !hasChanges ? 0.3 : 0.95))
-            .frame(minHeight: 44)
-            .buttonStyle(.plain)
+            .buttonStyle(UniverseNavigationButtonStyle())
             .disabled(cleanTitle.isEmpty || !hasChanges)
     }
 

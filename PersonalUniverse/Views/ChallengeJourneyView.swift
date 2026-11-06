@@ -77,9 +77,7 @@ struct ChallengeJourneyView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 if activeEvent == .none {
                     Button("Edit") { showSettings = true }
-                        .font(.subheadline)
-                        .foregroundStyle(.white.opacity(0.65))
-                        .buttonStyle(.plain)
+                        .buttonStyle(UniverseNavigationButtonStyle())
                         .accessibilityLabel("Edit challenge")
                 }
             }

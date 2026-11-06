@@ -168,21 +168,11 @@ struct EnterChallengeView: View {
                     ProgressView()
                         .tint(.white)
                 } else {
-                    Image(systemName: UniverseSymbols.forward)
-                        .font(
-                            .system(
-                                size: 17,
-                                weight: .medium
-                            )
-                        )
-                        .foregroundStyle(
-                            canContinue
-                                ? .white
-                                : .white.opacity(0.3)
-                        )
+                    UniverseNavigationArrow(symbol: UniverseSymbols.forward)
                 }
             }
-            .buttonStyle(.plain)
+            .buttonStyle(UniverseNavigationButtonStyle())
+            .accessibilityLabel(step == 3 ? "Create challenge" : "Continue")
             .frame(
                 width: 44,
                 height: 44

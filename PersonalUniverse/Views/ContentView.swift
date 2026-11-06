@@ -101,14 +101,10 @@ struct ContentView: View {
                             )
                         } label: {
                             Text("My Universe")
-                                .font(.subheadline)
                                 .lineLimit(1)
                                 .fixedSize(horizontal: true, vertical: false)
-                                .foregroundStyle(
-                                    .white.opacity(0.7)
-                                )
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(UniverseNavigationButtonStyle())
                         .fixedSize(horizontal: true, vertical: false)
                     }
                     .sharedBackgroundVisibility(.hidden)
@@ -506,14 +502,12 @@ struct ContentView: View {
                 )
             } label: {
                 Text("Begin")
-                    .font(.headline)
-                    .foregroundStyle(.white)
                     .frame(
                         minWidth: 100,
                         minHeight: 44
                     )
             }
-            .buttonStyle(.plain)
+            .buttonStyle(UniverseNavigationButtonStyle())
             .padding(.bottom, 24)
         }
     }
